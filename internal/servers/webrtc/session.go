@@ -182,7 +182,7 @@ func findVideoTrack(
 				if !firstReceived {
 					firstReceived = true
 				} else if tunit.PTS < lastPTS {
-					return fmt.Errorf("WebRTC doesn't support H264 streams with B-frames")
+					//return fmt.Errorf("WebRTC doesn't support H264 streams with B-frames")
 				}
 				lastPTS = tunit.PTS
 
