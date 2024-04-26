@@ -331,6 +331,12 @@ func (pconf *Path) validate(
 			return fmt.Errorf("'%s' is not a valid UDP URL", pconf.Source)
 		}
 
+	case strings.HasPrefix(pconf.Source, "rtp://"):
+		_, _, err := net.SplitHostPort(pconf.Source[len("rtp://"):])
+		if err != nil {
+			return fmt.Errorf("'%s' is not a valid RTP URL", pconf.Source)
+		}
+
 	case strings.HasPrefix(pconf.Source, "srt://"):
 
 		_, err := gourl.Parse(pconf.Source)
@@ -560,6 +566,7 @@ func (pconf Path) HasStaticSource() bool {
 		strings.HasPrefix(pconf.Source, "http://") ||
 		strings.HasPrefix(pconf.Source, "https://") ||
 		strings.HasPrefix(pconf.Source, "udp://") ||
+		strings.HasPrefix(pconf.Source, "rtp://") ||
 		strings.HasPrefix(pconf.Source, "srt://") ||
 		strings.HasPrefix(pconf.Source, "whep://") ||
 		strings.HasPrefix(pconf.Source, "wheps://") ||

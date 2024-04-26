@@ -25,7 +25,7 @@ writeQueueSize: 512
 udpMaxPayloadSize: 1472
 
 # Enable Prometheus-compatible metrics.
-metrics: no
+metrics: yes
 # Address of the metrics listener.
 metricsAddress: :9998
 
@@ -136,7 +136,7 @@ authJWTJWKS:
 # Global settings -> API
 
 # Enable controlling the server through the API.
-api: no
+api: yes
 # Address of the API listener.
 apiAddress: :9997
 
@@ -615,8 +615,15 @@ pathDefaults:
 # for example "~^prefix" will match all paths that start with "prefix".
 paths:
   # example:
-  # my_camera:
-  #   source: rtsp://my_camera
+  av_server_1:
+     source: rtp://127.0.0.1:5000
+
+  #av_server_2:
+  #   source: rtsp://localhost:8554/av_server_1
+
+  #av_server_3:
+  #   source: udp://127.0.0.1:5000
+
 
   # Settings under path "all_others" are applied to all paths that
   # do not match another entry.

@@ -12,6 +12,7 @@ import (
 	hlssource "github.com/bluenviron/mediamtx/internal/staticsources/hls"
 	rpicamerasource "github.com/bluenviron/mediamtx/internal/staticsources/rpicamera"
 	rtmpsource "github.com/bluenviron/mediamtx/internal/staticsources/rtmp"
+	rtpsource "github.com/bluenviron/mediamtx/internal/staticsources/rtp"
 	rtspsource "github.com/bluenviron/mediamtx/internal/staticsources/rtsp"
 	srtsource "github.com/bluenviron/mediamtx/internal/staticsources/srt"
 	udpsource "github.com/bluenviron/mediamtx/internal/staticsources/udp"
@@ -80,6 +81,13 @@ func (s *staticSourceHandler) initialize() {
 	case strings.HasPrefix(s.resolvedSource, "http://") ||
 		strings.HasPrefix(s.resolvedSource, "https://"):
 		s.instance = &hlssource.Source{
+			ResolvedSource: s.resolvedSource,
+			ReadTimeout:    s.readTimeout,
+			Parent:         s,
+		}
+
+	case strings.HasPrefix(s.resolvedSource, "rtp://"):
+		s.instance = &rtpsource.Source{
 			ResolvedSource: s.resolvedSource,
 			ReadTimeout:    s.readTimeout,
 			Parent:         s,
