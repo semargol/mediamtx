@@ -45,9 +45,10 @@ type packetConn interface {
 
 // Source is a RTP static source.
 type Source struct {
-	ResolvedSource string
-	ReadTimeout    conf.StringDuration
-	Parent         defs.StaticSourceParent
+	ResolvedSource     string
+	ResolvedAudiSource string
+	ReadTimeout        conf.StringDuration
+	Parent             defs.StaticSourceParent
 }
 
 // Log implements logger.Writer.
@@ -61,79 +62,131 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 
 	hostPort := s.ResolvedSource[len("udp://"):]
 
-	addr, err := net.ResolveUDPAddr("udp", hostPort)
+	addrVideo, err := net.ResolveUDPAddr("udp", hostPort)
 	if err != nil {
 		return err
 	}
 
-	var pc packetConn
+	var pcVideo packetConn
+	var pcAudio packetConn
 
-	if ip4 := addr.IP.To4(); ip4 != nil && addr.IP.IsMulticast() {
-		pc, err = multicast.NewMultiConn(hostPort, true, net.ListenPacket)
+	if ip4 := addrVideo.IP.To4(); ip4 != nil && addrVideo.IP.IsMulticast() {
+		pcVideo, err = multicast.NewMultiConn(hostPort, true, net.ListenPacket)
 		if err != nil {
 			return err
 		}
 	} else {
-		tmp, err := net.ListenPacket(restrictnetwork.Restrict("udp", addr.String()))
+		tmp, err := net.ListenPacket(restrictnetwork.Restrict("udp", addrVideo.String()))
 		if err != nil {
 			return err
 		}
-		pc = tmp.(*net.UDPConn)
+		pcVideo = tmp.(*net.UDPConn)
 	}
 
-	defer pc.Close()
+	defer pcVideo.Close()
 
-	err = pc.SetReadBuffer(udpKernelReadBufferSize)
+	err = pcVideo.SetReadBuffer(udpKernelReadBufferSize)
 	if err != nil {
 		return err
 	}
 
-	readerErr := make(chan error)
-	go func() {
-		readerErr <- s.runReader(pc)
-	}()
-
-	select {
-	case err := <-readerErr:
-		return err
-
-	case <-params.Context.Done():
-		pc.Close()
-		<-readerErr
-		return fmt.Errorf("terminated")
-	}
-}
-
-func (s *Source) runReader(pc net.PacketConn) error {
-	pc.SetReadDeadline(time.Now().Add(time.Duration(s.ReadTimeout)))
-
-	medi := &description.Media{
+	videoMedi := &description.Media{
 		Type: description.MediaTypeVideo,
 		Formats: []format.Format{&format.H264{
 			PayloadTyp:        96,
 			PacketizationMode: 1,
 		}},
 	}
-	medias := []*description.Media{medi}
+
+	medias := []*description.Media{videoMedi}
+
+	if s.ResolvedAudiSource != "" {
+		hostPort = s.ResolvedAudiSource[len("udp://"):]
+
+		addrAudio, err := net.ResolveUDPAddr("udp", hostPort)
+		if err != nil {
+			return err
+		}
+
+		if ip4 := addrAudio.IP.To4(); ip4 != nil && addrAudio.IP.IsMulticast() {
+			pcAudio, err = multicast.NewMultiConn(hostPort, true, net.ListenPacket)
+			if err != nil {
+				return err
+			}
+		} else {
+			tmp, err := net.ListenPacket(restrictnetwork.Restrict("udp", addrAudio.String()))
+			if err != nil {
+				return err
+			}
+			pcAudio = tmp.(*net.UDPConn)
+		}
+
+		defer pcAudio.Close()
+
+		err = pcAudio.SetReadBuffer(udpKernelReadBufferSize)
+		if err != nil {
+			return err
+		}
+
+		audioMedi := &description.Media{
+			Type: description.MediaTypeAudio,
+			Formats: []format.Format{&format.Opus{
+				PayloadTyp: 97,
+				IsStereo:   true,
+			}},
+		}
+		medias = []*description.Media{videoMedi, audioMedi}
+	}
 
 	var stream *stream.Stream
 
-	res := s.Parent.SetReady(defs.PathSourceStaticSetReadyReq{
-		Desc:               &description.Session{Medias: medias},
-		GenerateRTPPackets: false,
-	})
-	if res.Err != nil {
-		return res.Err
+	if stream == nil {
+		res := s.Parent.SetReady(defs.PathSourceStaticSetReadyReq{
+			Desc:               &description.Session{Medias: medias},
+			GenerateRTPPackets: false,
+		})
+		if res.Err != nil {
+			return res.Err
+		}
+
+		stream = res.Stream
 	}
 
 	defer s.Parent.SetNotReady(defs.PathSourceStaticSetNotReadyReq{})
+	bufVideo := make([]byte, 2048)
+	readerErrVideo := make(chan error)
+	go func() {
+		readerErrVideo <- s.runReaderVideo(pcVideo, stream, medias, bufVideo)
+	}()
 
-	stream = res.Stream
-	// Buffer to read incoming packets
-	buf := make([]byte, 2048) // Adjust the size based on expected
+	readerErrAudio := make(chan error)
+	if s.ResolvedAudiSource != "" {
+		bufAudio := make([]byte, 2048)
+		go func() {
+			readerErrAudio <- s.runReaderAudio(pcAudio, stream, medias, bufAudio)
+		}()
+	}
+	select {
+	case err := <-readerErrVideo:
+		return err
+	case err := <-readerErrAudio:
+		return err
+	case <-params.Context.Done():
+		pcVideo.Close()
+		pcAudio.Close()
+		<-readerErrVideo
+		<-readerErrAudio
+		return fmt.Errorf("terminated")
+	}
+}
+
+func (s *Source) runReaderVideo(pc net.PacketConn,
+	stream *stream.Stream,
+	medias []*description.Media, buf []byte) error {
+
 	for {
-		pc.SetReadDeadline(time.Now().Add(time.Duration(s.ReadTimeout)))
 		n, _, err := pc.ReadFrom(buf)
+
 		if err != nil {
 			return err
 		}
@@ -142,13 +195,30 @@ func (s *Source) runReader(pc net.PacketConn) error {
 			fmt.Println("Failed to unmarshal RTP packet:", err)
 			continue
 		}
-		//fmt.Printf("Received %+v\n", pkt)
-		//pts := time.Duration(pkt.Timestamp) * time.Millisecond
-		pts := time.Duration(0)
+		stream.WriteRTPPacket(medias[0],
+			medias[0].Formats[0],
+			&pkt, time.Now(), time.Duration(0))
+	}
+}
 
-		stream.WriteRTPPacket(medi,
-			medi.Formats[0],
-			&pkt, time.Now(), pts)
+func (s *Source) runReaderAudio(pc net.PacketConn,
+	stream *stream.Stream,
+	medias []*description.Media, buf []byte) error {
+
+	for {
+		n, _, err := pc.ReadFrom(buf)
+
+		if err != nil {
+			return err
+		}
+		var pkt rtp.Packet
+		if err := pkt.Unmarshal(buf[:n]); err != nil {
+			fmt.Println("Failed to unmarshal RTP packet:", err)
+			continue
+		}
+		stream.WriteRTPPacket(medias[1],
+			medias[1].Formats[0],
+			&pkt, time.Now(), time.Duration(0))
 	}
 }
 

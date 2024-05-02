@@ -88,9 +88,10 @@ func (s *staticSourceHandler) initialize() {
 
 	case strings.HasPrefix(s.resolvedSource, "rtp://"):
 		s.instance = &rtpsource.Source{
-			ResolvedSource: s.resolvedSource,
-			ReadTimeout:    s.readTimeout,
-			Parent:         s,
+			ResolvedSource:     s.resolvedSource,
+			ResolvedAudiSource: s.conf.AudioSource,
+			ReadTimeout:        s.readTimeout,
+			Parent:             s,
 		}
 
 	case strings.HasPrefix(s.resolvedSource, "udp://"):

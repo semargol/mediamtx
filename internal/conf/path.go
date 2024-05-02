@@ -117,6 +117,9 @@ type Path struct {
 	DisablePublisherOverride *bool  `json:"disablePublisherOverride,omitempty"` // deprecated
 	SRTPublishPassphrase     string `json:"srtPublishPassphrase"`
 
+	// RTP source
+	AudioSource string `json:"audioSource,omitempty"`
+
 	// RTSP source
 	RTSPTransport       RTSPTransport  `json:"rtspTransport"`
 	RTSPAnyPort         bool           `json:"rtspAnyPort"`
@@ -126,7 +129,7 @@ type Path struct {
 	RTSPRangeStart      string         `json:"rtspRangeStart"`
 
 	// Redirect source
-	SourceRedirect string `json:"sourceRedirect"`
+	SourceRedirect string `json:"sourceRedirect,omitempty"`
 
 	// Raspberry Pi Camera source
 	RPICameraCamID             int       `json:"rpiCameraCamID"`
