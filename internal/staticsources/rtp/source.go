@@ -23,21 +23,6 @@ const (
 	udpKernelReadBufferSize = 0x80000
 )
 
-type packetConnReader struct {
-	net.PacketConn
-}
-
-func newPacketConnReader(pc net.PacketConn) *packetConnReader {
-	return &packetConnReader{
-		PacketConn: pc,
-	}
-}
-
-func (r *packetConnReader) Read(p []byte) (int, error) {
-	n, _, err := r.PacketConn.ReadFrom(p)
-	return n, err
-}
-
 type packetConn interface {
 	net.PacketConn
 	SetReadBuffer(int) error
