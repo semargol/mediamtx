@@ -177,6 +177,7 @@ type API struct {
 	Parent       apiParent
 
 	httpServer *httpp.WrappedServer
+	strmServer *StreamApiServer
 	mutex      sync.RWMutex
 }
 
@@ -264,6 +265,11 @@ func (a *API) Initialize() error {
 		router,
 		a,
 	)
+	if err != nil {
+		return err
+	}
+
+	a.strmServer, err = NewStreamApiServer(network, address, time.Duration(a.ReadTimeout), a)
 	if err != nil {
 		return err
 	}
