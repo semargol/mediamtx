@@ -56,6 +56,11 @@ func (c *Control) Once() {
 		fmt.Print(">")
 		text, _ := bufio.NewReader(os.Stdin).ReadString('\n')
 		text, _ = strings.CutSuffix(text, "\n")
+		text, _ = strings.CutSuffix(text, "\r")
+
+		//fmt.Println("")
+		//fmt.Println("\"" + text + "\"")
+
 		if text == "help" || text == "h" || text == "?" {
 			showHelp()
 		} else {
