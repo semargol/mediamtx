@@ -92,13 +92,13 @@ func ConfigSync(t *ApiServer) {
 	newConf.OptionalPaths = nil
 	for _, pipeConfig := range t.strmConf.Pipes {
 		if pipeConfig.Source == "RTPR" {
-			//fmt.Printf("Pipe ID %d: Name:%s VideoURL = %s\n", id, pipeConfig.Name, rtprConf.VideoURL)
 			newConf.AddPath(pipeConfig.Name, nil)
 			newConf.Validate()
 			setField(newConf.OptionalPaths[pipeConfig.Name], "Source", pipeConfig.RTPR.VideoURL)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "AudioSource", pipeConfig.RTPR.AudioURL)
-			//fmt.Println("rtprConf.AudioURL", rtprConf.AudioURL)
+			//fmt.Println("AudioSource", pipeConfig.RTPR.AudioURL)
 			newConf.Validate()
+			//fmt.Println("newConf AudioSource", newConf.Paths[pipeConfig.Name].AudioSource)
 		}
 	}
 	//newConf.Validate()del
@@ -195,7 +195,7 @@ func ApiUpdatePipeConfig(api *ApiServer, req *Message, configType string) (Messa
 
 	// Update the pipe configuration after making changes
 	api.strmConf.Pipes[id] = pipe
-	fmt.Println("api.strmConf.Pipes[id]: ", api.strmConf.Pipes[id])
+	//fmt.Println("api.strmConf.Pipes[id]: ", api.strmConf.Pipes[id])
 	ConfigSync(api)
 	return Message{
 		Name: "success",
@@ -428,7 +428,7 @@ func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Mess
 
 	v := reflect.ValueOf(&pipe).Elem()
 	subConfigField := v.FieldByName(configType)
-	fmt.Println("subConfigField: ", subConfigField)
+	//fmt.Println("subConfigField: ", subConfigField)
 	if !subConfigField.IsValid() {
 		return Message{}, fmt.Errorf("sub-config %s not found in PipeConfig", configType)
 	}
@@ -449,7 +449,7 @@ func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Mess
 		}
 
 		fieldName := strings.ToLower(lowerKey) // Assume field names are in correct case
-		fmt.Println("fieldName: ", fieldName)
+		//fmt.Println("fieldName: ", fieldName)
 		fieldValue := fieldsMap[lowerKey]
 		if !fieldValue.IsValid() {
 			fmt.Printf("Field %s not found in %s\n", fieldName, configType)
