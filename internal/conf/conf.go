@@ -237,6 +237,10 @@ type Conf struct {
 	Paths         map[string]*Path         `json:"-"` // filled by Check()
 }
 
+func (conf *Conf) SetDefaults() {
+	conf.setDefaults()
+}
+
 func (conf *Conf) setDefaults() {
 	// General
 	conf.LogLevel = LogLevel(logger.Info)

@@ -1,0 +1,19 @@
+init
+
+add pipe id=1
+del pipe id=1
+set pipe id=1 name=newname
+set pipe id=1 source=RTPR
+add pipe id=2 name=name2 source=RTPR
+get pipe id=1 source
+get pipe id=1 NAME source
+get pipe id=1 name soUrce
+
+set rtpr id=1 videourl=rtp://2.2.2.3:5000
+set rtpr id=1 videourl=rtp://127.0.0.1:5000
+set rtpr id=1 audeourl=rtp://127.0.0.1:5002
+
+get rtpr id=1 VideoUrl
+get rtpr id=1 AudioURL videourl
+
+set pipe id=1 source=RTPR

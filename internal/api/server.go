@@ -3,6 +3,8 @@ package api
 import (
 	"fmt"
 	"net"
+
+	"github.com/bluenviron/mediamtx/internal/conf"
 )
 
 func CreateServerAndListen(sep string, bep string, api *API) {
@@ -12,9 +14,18 @@ func CreateServerAndListen(sep string, bep string, api *API) {
 
 func NewApiServer(serverEp string, brokerEp string, api *API) *ApiServer {
 	var s *ApiServer = new(ApiServer)
+	defaultStrmConf := conf.InitializeDefaultStrmConf()
+	s.strmConf = &defaultStrmConf
 	s.transceiver.open(serverEp)
-	s.brokerAddr, _ = net.ResolveUDPAddr("udp", brokerEp)
+	addr, err := net.ResolveUDPAddr("udp", brokerEp)
+	if err != nil {
+		fmt.Println("Error resolving ApiServer UDP address:", err)
+		return nil
+	}
+	s.brokerAddr = addr
 	s.api = api
+
+	//ConfigSync(s)
 	return s
 }
 
@@ -36,6 +47,7 @@ type ApiServer struct {
 	transceiver
 	brokerAddr *net.UDPAddr
 	api        *API
+	strmConf   *conf.StrmConf
 }
 
 func (t *ApiServer) SendTo(msg Message) {
@@ -70,51 +82,57 @@ func (s *ApiServer) Listen() {
 	for {
 		request, _, err = s.ReceiveFrom(10)
 		if err == nil {
+			fmt.Println("request: ", request)
 			//println("Server Received request: ", request.String())
+			if request.Verb == "init" {
+				ConfigSync(s)
+			}
 			switch request.Verb + "/" + request.Noun {
-
 			case "add/pipe":
 				{
-					response, _ = ApiAddPipe(s.api, &request)
+					response, _ = ApiAddPipe(s, &request)
 				}
 			case "del/pipe":
 				{
-					response, _ = ApiDelPipe(s.api, &request)
+					response, _ = ApiDelPipe(s, &request)
 				}
 			case "set/pipe":
 				{
-					response, _ = ApiSetPipe(s.api, &request)
+					response, _ = ApiSetPipe(s, &request)
 				}
 			case "get/pipe":
 				{
-					response, _ = ApiGetPipe(s.api, &request)
+					response, _ = ApiGetPipe(s, &request)
 				}
 
-			case "add/rtp":
+			// case "add/rtp":
+			// 	{
+			// 		response, _ = ApiAddRtp(s.api, &request)
+			// 	}
+			// case "del/rtp":
+			// 	{
+			// 		response, _ = ApiDelRtp(s.api, &request)
+			// 	}
+			case "set/rtpr":
 				{
-					response, _ = ApiAddRtp(s.api, &request)
+					// response, _ = ApiSetRtp(s.api, &request)
+					response, _ = ApiUpdatePipeConfig(s, &request, "RTPR")
 				}
-			case "del/rtp":
+			case "get/rtpr":
 				{
-					response, _ = ApiDelRtp(s.api, &request)
-				}
-			case "set/rtp":
-				{
-					response, _ = ApiSetRtp(s.api, &request)
-				}
-			case "get/rtp":
-				{
-					response, _ = ApiGetRtp(s.api, &request)
+					// response, _ = ApiGetRtp(s.api, &request)
+					response, _ = ApiGetSubConfigField(s, &request, "RTPR")
+					//fmt.Println("response: ", response)
 				}
 
-			case "add/rtsp":
-				{
-					response, _ = ApiAddRtsp(s.api, &request)
-				}
-			case "del/rtsp":
-				{
-					response, _ = ApiDelRtsp(s.api, &request)
-				}
+			// case "add/rtsp":
+			// 	{
+			// 		response, _ = ApiAddRtsp(s.api, &request)
+			// 	}
+			// case "del/rtsp":
+			// 	{
+			// 		response, _ = ApiDelRtsp(s.api, &request)
+			// 	}
 			case "set/rtsp":
 				{
 					response, _ = ApiSetRtsp(s.api, &request)

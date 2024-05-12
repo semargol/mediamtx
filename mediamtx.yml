@@ -615,9 +615,9 @@ pathDefaults:
 # for example "~^prefix" will match all paths that start with "prefix".
 paths:
   # example:
-  mypath:
-     source: rtp://127.0.0.1:5000
-     audioSource: rtp://127.0.0.1:5002
+  #mypath:
+     #source: rtp://127.0.0.1:5000
+     #audioSource: rtp://127.0.0.1:5002
      #ffmpeg -re -stream_loop -1 -i balet.mp4 -an -c:v libx264 -f rtp rtp://127.0.0.1:5000 -vn -c:a copy -f  rtp rtp://127.0.0.1:5002 -sdp_file balet.sdp
   #av_server_2:
   #   source: rtsp://localhost:8554/av_server_1
