@@ -3,6 +3,7 @@ package api
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -48,10 +49,48 @@ func NewControl(controlEp string, brokerEp string) *Control {
 	return c
 }
 
-func (c *Control) Once() {
+func (c *Control) OneCommand(text string) {
+	text, _ = strings.CutSuffix(text, "\n")
+	text, _ = strings.CutSuffix(text, "\r")
+	var request Message = NewMessage(text)
+	request.Topic = "req"
+	//fmt.Println("msg ", request)
+	c.SendTo(request)
+	response, _, err := c.ReceiveFrom(100)
+	if err != nil {
+		fmt.Println("timeout, more than 100 msec", response)
+	} else {
+		fmt.Println(response.Data["result"], response)
+	}
+}
+
+func (c *Control) Once(path string) {
 	c.PublishAt("req")
 	c.SubscribeAt("res")
 	//var request Message
+	if len(path) > 0 {
+		//var path string = ""
+		var file *os.File
+		file, err := os.Open(path)
+		if err == nil {
+			fmt.Println("ci.ini = ", path)
+			reader := bufio.NewReader(file)
+			for {
+				text, eof := reader.ReadString('\n')
+				if eof == io.EOF {
+					break
+				}
+				fmt.Println(">", text)
+				c.OneCommand(text)
+				//text, _ = strings.CutSuffix(text, "\n")
+				//text, _ = strings.CutSuffix(text, "\r")
+			}
+		} else {
+			fmt.Println("Ini file not found ", path)
+		}
+	} else {
+		fmt.Println("No ini file")
+	}
 	for {
 		fmt.Print(">")
 		text, _ := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -64,16 +103,19 @@ func (c *Control) Once() {
 		if text == "help" || text == "h" || text == "?" {
 			showHelp()
 		} else {
-			var request Message = NewMessage(text)
-			request.Topic = "req"
-			//fmt.Println("msg ", request)
-			c.SendTo(request)
-			response, _, err := c.ReceiveFrom(100)
-			if err != nil {
-				fmt.Println("timeout, more than 100 msec", response)
-			} else {
-				fmt.Println(response.Data["result"], response)
-			}
+			c.OneCommand(text)
+			/*
+				var request Message = NewMessage(text)
+				request.Topic = "req"
+				//fmt.Println("msg ", request)
+				c.SendTo(request)
+				response, _, err := c.ReceiveFrom(100)
+				if err != nil {
+					fmt.Println("timeout, more than 100 msec", response)
+				} else {
+					fmt.Println(response.Data["result"], response)
+				}
+			*/
 		}
 	}
 }

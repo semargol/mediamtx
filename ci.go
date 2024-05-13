@@ -1,8 +1,15 @@
 package main
 
-import "github.com/bluenviron/mediamtx/internal/api"
+import (
+	"github.com/bluenviron/mediamtx/internal/api"
+	"os"
+)
 
 func main() {
 	c := api.NewControl("127.0.0.1:7002", "127.0.0.1:7000")
-	c.Once()
+	if len(os.Args) > 1 {
+		c.Once(os.Args[1])
+	} else {
+		c.Once("")
+	}
 }
