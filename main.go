@@ -2,10 +2,8 @@
 package main
 
 import (
-	"github.com/bluenviron/mediamtx/internal/api"
-	"os"
-
 	"github.com/bluenviron/mediamtx/internal/core"
+	"os"
 )
 
 func main() {
@@ -13,8 +11,8 @@ func main() {
 	if !ok {
 		os.Exit(1)
 	}
-	c := api.NewControl("127.0.0.1:7002", "127.0.0.1:7000")
-	go c.Once()
+	//c := api.NewControl("127.0.0.1:7002", "127.0.0.1:7000")
+	//go c.Once()
 
 	s.Wait()
 }
