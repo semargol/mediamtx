@@ -71,8 +71,13 @@ func (t *ApiServer) PublishAt(topic string) {
 	t.transceiver.PublishAt(topic, t.brokerAddr)
 }
 
+func (t *ApiServer) SendEvent(event Message) {
+	t.transceiver.sendTo(event, t.brokerAddr)
+}
+
 func (s *ApiServer) Listen() {
 	fmt.Println("Start api server at ", s.endPoint.String(), " with broker at ", s.brokerAddr.String())
+	s.PublishAt("evn")
 	s.PublishAt("res")
 	s.SubscribeAt("req")
 	var request Message
@@ -154,6 +159,8 @@ func (s *ApiServer) Listen() {
 			//response.Data = request.Data
 			s.SendTo(response)
 			//fmt.Pgetrintln("Server Sent response: ", response)
+			response.Topic = "evn"
+			s.SendEvent(response)
 		}
 	}
 }

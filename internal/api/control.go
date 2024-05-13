@@ -56,7 +56,7 @@ func (c *Control) OneCommand(text string) {
 	request.Topic = "req"
 	//fmt.Println("msg ", request)
 	c.SendTo(request)
-	response, _, err := c.ReceiveFrom(100)
+	response, _, err := c.ReceiveFrom(1000)
 	if err != nil {
 		fmt.Println("timeout, more than 100 msec", response)
 	} else {
@@ -64,12 +64,11 @@ func (c *Control) OneCommand(text string) {
 	}
 }
 
-func (c *Control) Once(path string) {
+func (c *Control) Init(path string) {
 	c.PublishAt("req")
 	c.SubscribeAt("res")
-	//var request Message
+
 	if len(path) > 0 {
-		//var path string = ""
 		var file *os.File
 		file, err := os.Open(path)
 		if err == nil {
@@ -82,8 +81,6 @@ func (c *Control) Once(path string) {
 				}
 				fmt.Println(">", text)
 				c.OneCommand(text)
-				//text, _ = strings.CutSuffix(text, "\n")
-				//text, _ = strings.CutSuffix(text, "\r")
 			}
 		} else {
 			fmt.Println("Ini file not found ", path)
@@ -91,31 +88,29 @@ func (c *Control) Once(path string) {
 	} else {
 		fmt.Println("No ini file")
 	}
+}
+
+func (c *Control) Commands() {
 	for {
 		fmt.Print(">")
 		text, _ := bufio.NewReader(os.Stdin).ReadString('\n')
 		text, _ = strings.CutSuffix(text, "\n")
 		text, _ = strings.CutSuffix(text, "\r")
 
-		//fmt.Println("")
-		//fmt.Println("\"" + text + "\"")
-
 		if text == "help" || text == "h" || text == "?" {
 			showHelp()
 		} else {
 			c.OneCommand(text)
-			/*
-				var request Message = NewMessage(text)
-				request.Topic = "req"
-				//fmt.Println("msg ", request)
-				c.SendTo(request)
-				response, _, err := c.ReceiveFrom(100)
-				if err != nil {
-					fmt.Println("timeout, more than 100 msec", response)
-				} else {
-					fmt.Println(response.Data["result"], response)
-				}
-			*/
+		}
+	}
+}
+
+func (c *Control) Events() {
+	c.SubscribeAt("evn")
+	for {
+		event, _, err := c.ReceiveFrom(100)
+		if err == nil {
+			fmt.Println(event)
 		}
 	}
 }
