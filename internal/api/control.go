@@ -18,6 +18,7 @@ func CreateControlAndTest(cep string, bep string) *Control {
 type Control struct {
 	transceiver
 	brokerAddr *net.UDPAddr
+	cmdNumber  int
 }
 
 func (c *Control) SendTo(msg Message) {
@@ -53,6 +54,8 @@ func (c *Control) OneCommand(text string) {
 	text, _ = strings.CutSuffix(text, "\n")
 	text, _ = strings.CutSuffix(text, "\r")
 	var request Message = NewMessage(text)
+	c.cmdNumber++
+	request.Corr = c.cmdNumber
 	request.Topic = "req"
 	//fmt.Println("msg ", request)
 	c.SendTo(request)
@@ -65,6 +68,7 @@ func (c *Control) OneCommand(text string) {
 }
 
 func (c *Control) Init(path string) {
+	c.cmdNumber = 100
 	c.PublishAt("req")
 	c.SubscribeAt("res")
 

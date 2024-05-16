@@ -240,7 +240,7 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, error) {
 
 func ApiAddRtp(api *API, req *Message) (Message, error) {
 	id := req.Data["id"]
-	response := Message{"msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
 	response.Data["result"] = "OK"
 	response.Data["id"] = id
 	return response, nil
@@ -248,14 +248,14 @@ func ApiAddRtp(api *API, req *Message) (Message, error) {
 
 func ApiAddRtsp(api *API, req *Message) (Message, error) {
 	id := req.Data["id"]
-	response := Message{"msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
 	response.Data["result"] = "OK"
 	response.Data["id"] = id
 	return response, nil
 }
 
 func ApiDelPipe(api *ApiServer, req *Message) (Message, error) {
-	response := Message{"msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
 	id, _ := ExtractID(req)
 	fmt.Println("Deleting pipe ID=", id)
 	err := DeletePipeByID(api, id)
@@ -271,7 +271,7 @@ func ApiDelPipe(api *ApiServer, req *Message) (Message, error) {
 
 func ApiDelRtp(api *API, req *Message) (Message, error) {
 	id := req.Data["id"]
-	response := Message{"msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
 	response.Data["result"] = "OK"
 	response.Data["id"] = id
 	return response, nil
@@ -279,7 +279,7 @@ func ApiDelRtp(api *API, req *Message) (Message, error) {
 
 func ApiDelRtsp(api *API, req *Message) (Message, error) {
 	id := req.Data["id"]
-	response := Message{"msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
 	response.Data["result"] = "OK"
 	response.Data["id"] = id
 	return response, nil
@@ -341,13 +341,13 @@ func ApiSetPipe(t *ApiServer, req *Message) (Message, error) {
 }
 
 func ApiSetRtp(api *API, req *Message) (Message, error) {
-	response := Message{"msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
 	response.Data["result"] = "OK"
 	return response, nil
 }
 
 func ApiSetRtsp(api *API, req *Message) (Message, error) {
-	response := Message{"msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
 	response.Data["result"] = "OK"
 	return response, nil
 }
@@ -480,7 +480,7 @@ func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Mess
 }
 
 func ApiGetRtsp(api *API, req *Message) (Message, error) {
-	response := Message{"msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
 	globals(api, &response)
 	return response, nil
 }

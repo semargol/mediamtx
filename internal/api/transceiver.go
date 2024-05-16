@@ -46,12 +46,12 @@ func (t *transceiver) receiveFrom(msec int) (Message, *net.UDPAddr, error) {
 }
 
 func (t *transceiver) SubscribeAt(topic string, at *net.UDPAddr) {
-	var sub Message = Message{"sub", topic, "", "", make(map[string]string)}
+	var sub Message = Message{0, "sub", topic, "", "", make(map[string]string)}
 	t.sendTo(sub, at)
 }
 
 func (t *transceiver) PublishAt(topic string, at *net.UDPAddr) {
-	var pub Message = Message{"pub", topic, "", "", make(map[string]string)}
+	var pub Message = Message{0, "pub", topic, "", "", make(map[string]string)}
 	//msg.Name = "publish"
 	//msg.Topic = topic
 	//msg.Data = make(map[string]string)

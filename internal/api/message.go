@@ -6,6 +6,7 @@ import (
 )
 
 type Message struct {
+	Corr  int               // correlation number
 	Name  string            // msg, pub[lish], sub[scribe], rem[ove]
 	Topic string            // req[est], res[ponse]
 	Verb  string            // add, set, get, del

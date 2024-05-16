@@ -156,7 +156,7 @@ func (s *ApiServer) Listen() {
 			//response = request
 			response.Name = "msg"
 			response.Topic = "res"
-			//response.Data = request.Data
+			response.Corr = request.Corr
 			s.SendTo(response)
 			//fmt.Pgetrintln("Server Sent response: ", response)
 			response.Topic = "evn"
