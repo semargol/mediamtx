@@ -143,22 +143,22 @@ func DeletePipeByID(t *ApiServer, id int) error {
 	return nil
 }
 
-func ApiUpdatePipeConfig(api *ApiServer, req *Message, configType string) (Message, error) {
+func ApiUpdatePipeConfig(api *ApiServer, req *Message, configType string) (Message, int) {
 	id, err := ExtractID(req)
 	if err != nil {
-		return Message{}, err
+		return getError(req, 100)
 	}
 
 	pipe, exists := api.strmConf.Pipes[id]
 	if !exists {
-		return Message{}, errorf("no pipe found with ID %d", id)
+		return getError(req, 101)
 	}
 
 	// Obtain the field (RTPR or RTPS) using reflection
 	v := reflect.ValueOf(&pipe).Elem()
 	field := v.FieldByName(configType)
 	if !field.IsValid() {
-		return Message{}, errorf("field %s not found in PipeConfig", configType)
+		return getError(req, 104)
 	}
 
 	// Create a map to match lowercased field names to reflect.Value fields
@@ -178,8 +178,7 @@ func ApiUpdatePipeConfig(api *ApiServer, req *Message, configType string) (Messa
 
 		subField, found := fieldsMap[lowerKey]
 		if !found {
-			fmt.Println("Field not found:", key)
-			continue
+			return getError(req, 104)
 		}
 
 		if subField.CanSet() {
@@ -189,13 +188,11 @@ func ApiUpdatePipeConfig(api *ApiServer, req *Message, configType string) (Messa
 			case reflect.Int:
 				intValue, err := strconv.Atoi(value)
 				if err != nil {
-					fmt.Println("Error converting string to int for field", key, ":", err)
-					continue
+					return getError(req, 105)
 				}
 				subField.SetInt(int64(intValue))
 			default:
-				fmt.Println("Unsupported field type:", subField.Type())
-				continue
+				return getError(req, 105)
 			}
 		}
 	}
@@ -207,7 +204,7 @@ func ApiUpdatePipeConfig(api *ApiServer, req *Message, configType string) (Messa
 	return Message{
 		Name: "success",
 		Data: map[string]string{"status": "Configuration updated successfully"},
-	}, nil
+	}, 0
 }
 
 func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
@@ -394,8 +391,7 @@ func ApiGetPipe(api *ApiServer, req *Message) (Message, int) {
 		fieldName := strings.ToLower(lowerKey) // Assume field names are in correct case
 		fieldValue := fieldsMap[lowerKey]
 		if !fieldValue.IsValid() {
-			fmt.Printf("Field %s not found in PipeConfig\n", fieldName)
-			continue // Skip if the field doesn't exist
+			return getError(req, 104)
 		}
 
 		// Convert the field value to a string representation
@@ -410,8 +406,7 @@ func ApiGetPipe(api *ApiServer, req *Message) (Message, int) {
 		case reflect.Bool:
 			valueStr = strconv.FormatBool(fieldValue.Bool())
 		default:
-			fmt.Printf("Unsupported type for field %s\n", fieldName)
-			continue // Skip unsupported types
+			return getError(req, 104)
 		}
 
 		responseData[strings.ToLower(fieldName)] = valueStr
@@ -425,22 +420,22 @@ func ApiGetPipe(api *ApiServer, req *Message) (Message, int) {
 	}, 0
 }
 
-func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Message, error) {
+func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Message, int) {
 	id, err := ExtractID(req)
 	if err != nil {
-		return Message{}, err
+		return getError(req, 100)
 	}
 
 	pipe, exists := api.strmConf.Pipes[id]
 	if !exists {
-		return Message{}, fmt.Errorf("no pipe found with ID %d", id)
+		return getError(req, 101)
 	}
 
 	v := reflect.ValueOf(&pipe).Elem()
 	subConfigField := v.FieldByName(configType)
 	//fmt.Println("subConfigField: ", subConfigField)
 	if !subConfigField.IsValid() {
-		return Message{}, fmt.Errorf("sub-config %s not found in PipeConfig", configType)
+		return getError(req, 104)
 	}
 
 	responseData := make(map[string]string)
@@ -462,8 +457,7 @@ func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Mess
 		//fmt.Println("fieldName: ", fieldName)
 		fieldValue := fieldsMap[lowerKey]
 		if !fieldValue.IsValid() {
-			fmt.Printf("Field %s not found in %s\n", fieldName, configType)
-			continue // Skip if the field doesn't exist
+			return getError(req, 104)
 		}
 
 		// Convert the field value to a string representation
@@ -476,8 +470,7 @@ func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Mess
 		case reflect.Bool:
 			valueStr = strconv.FormatBool(fieldValue.Bool())
 		default:
-			fmt.Printf("Unsupported type for field %s\n", fieldName)
-			continue // Skip unsupported types
+			return getError(req, 105)
 		}
 
 		responseData[strings.ToLower(fieldName)] = valueStr
@@ -486,7 +479,7 @@ func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Mess
 	return Message{
 		Name: "success",
 		Data: responseData,
-	}, nil
+	}, 0
 }
 
 func ApiGetRtsp(api *API, req *Message) (Message, error) {

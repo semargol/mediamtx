@@ -9,22 +9,6 @@ type ErrorDescription struct {
 
 func getErrorDescription(errorCode int, opts ...interface{}) string {
 	errors := map[int]ErrorDescription{
-		401: {
-			English: "Provided value is invalid",
-			Russian: "Представленное значение не валидно",
-		},
-		402: {
-			English: "Field with a given name were not found",
-			Russian: "Поля с заданным именем не найдено",
-		},
-		403: {
-			English: "Name of field is not a string",
-			Russian: "Имя поля не строка",
-		},
-		404: {
-			English: "Cannot set field",
-			Russian: "Невозможно изменить поле",
-		},
 		100: {
 			English: "Cannot extract ID",
 			Russian: "Невозможно получить ID",
@@ -40,6 +24,14 @@ func getErrorDescription(errorCode int, opts ...interface{}) string {
 		103: {
 			English: "Can't delete pipe with specified ID",
 			Russian: "Невозможно удалить pipe с заданным ID",
+		},
+		104: {
+			English: "Field not found in pipe config",
+			Russian: "Поле не найдено в конфигурации pipe",
+		},
+		105: {
+			English: "Unsupported type for field",
+			Russian: "Неподдерживаемый тип поля",
 		},
 	}
 
