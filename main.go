@@ -2,8 +2,9 @@
 package main
 
 import (
-	"github.com/bluenviron/mediamtx/internal/core"
 	"os"
+
+	"github.com/bluenviron/mediamtx/internal/core"
 )
 
 func main() {

@@ -32,8 +32,15 @@ func globals(api *API, response *Message) {
 
 func errorf(format string, a ...interface{}) error {
 	err := fmt.Errorf(format, a...)
-	fmt.Println("Error logged:", err) // Запись ошибки в консоль
+	fmt.Println("Error logged:", err)
 	return err
+}
+
+func getError(req *Message, errorCode int) (Message, int) {
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response.Data["result"] = strconv.Itoa(errorCode)
+	response.Data["errorMsg"] = getErrorDescription(errorCode, true)
+	return response, errorCode
 }
 
 func setField(p *conf.OptionalPath, fieldName, newValue string) {
@@ -203,11 +210,11 @@ func ApiUpdatePipeConfig(api *ApiServer, req *Message, configType string) (Messa
 	}, nil
 }
 
-func ApiAddPipe(t *ApiServer, req *Message) (Message, error) {
+func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
 	// Use ExtractID to get the ID from the message
 	id, err := ExtractID(req)
 	if err != nil {
-		return Message{}, err
+		return getError(req, 100)
 	}
 
 	// Check for existing ID
@@ -215,7 +222,7 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, error) {
 		t.strmConf.Pipes = make(map[int]conf.PipeConfig)
 	}
 	if _, exists := t.strmConf.Pipes[id]; exists {
-		return Message{}, errorf("pipe with id %d already exists", id)
+		return getError(req, 102)
 	}
 	// Create a new PipeConfig and add it to the map
 	newPipe := conf.PipeConfig{
@@ -227,7 +234,10 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, error) {
 	}
 	t.strmConf.Pipes[id] = newPipe
 
-	ApiSetPipe(t, req)
+	r, e := ApiSetPipe(t, req)
+	if e != 0 {
+		return r, e
+	}
 	ConfigSync(t)
 	// Return success message
 	return Message{
@@ -235,7 +245,7 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, error) {
 		Data: map[string]string{
 			"status": "Pipe added successfully",
 		},
-	}, nil
+	}, 0
 }
 
 func ApiAddRtp(api *API, req *Message) (Message, error) {
@@ -254,19 +264,18 @@ func ApiAddRtsp(api *API, req *Message) (Message, error) {
 	return response, nil
 }
 
-func ApiDelPipe(api *ApiServer, req *Message) (Message, error) {
+func ApiDelPipe(api *ApiServer, req *Message) (Message, int) {
 	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
 	id, _ := ExtractID(req)
-	fmt.Println("Deleting pipe ID=", id)
 	err := DeletePipeByID(api, id)
 	if err != nil {
-		fmt.Println("Error:", err)
+		return getError(req, 103)
 	} else {
 		ConfigSync(api)
 	}
 	response.Data["result"] = "OK"
 	response.Data["id"] = strconv.Itoa(id)
-	return response, nil
+	return response, 0
 }
 
 func ApiDelRtp(api *API, req *Message) (Message, error) {
@@ -286,17 +295,17 @@ func ApiDelRtsp(api *API, req *Message) (Message, error) {
 }
 
 // ApiSetPipe updates a specific field in the PipeConfig for a given Pipe ID from Message, case-insensitively
-func ApiSetPipe(t *ApiServer, req *Message) (Message, error) {
+func ApiSetPipe(t *ApiServer, req *Message) (Message, int) {
 	// Extracting pipe ID from the request
 	id, err := ExtractID(req)
 	if err != nil {
-		return Message{}, err
+		return getError(req, 100)
 	}
 
 	// Retrieving the PipeConfig
 	pipe, exists := t.strmConf.Pipes[id]
 	if !exists {
-		return Message{}, errorf("no pipe found with ID %d", id)
+		return getError(req, 101)
 	}
 
 	// Using reflection to set field dynamically and case-insensitively
@@ -337,7 +346,7 @@ func ApiSetPipe(t *ApiServer, req *Message) (Message, error) {
 	return Message{
 		Name: "success",
 		Data: map[string]string{"status": "pipe updated successfully"},
-	}, nil
+	}, 0
 }
 
 func ApiSetRtp(api *API, req *Message) (Message, error) {
@@ -353,17 +362,17 @@ func ApiSetRtsp(api *API, req *Message) (Message, error) {
 }
 
 // ApiGetPipe retrieves the values of specified fields from a PipeConfig in api.strmConf.Pipes by ID.
-func ApiGetPipe(api *ApiServer, req *Message) (Message, error) {
+func ApiGetPipe(api *ApiServer, req *Message) (Message, int) {
 	// Extract the pipe ID from the request
 	id, err := ExtractID(req)
 	if err != nil {
-		return Message{}, err
+		return getError(req, 100)
 	}
 
 	// Retrieve the specific PipeConfig
 	pipe, exists := api.strmConf.Pipes[id]
 	if !exists {
-		return Message{}, errorf("no pipe found with ID %d", id)
+		return getError(req, 101)
 	}
 
 	responseData := map[string]string{}
@@ -406,13 +415,14 @@ func ApiGetPipe(api *ApiServer, req *Message) (Message, error) {
 		}
 
 		responseData[strings.ToLower(fieldName)] = valueStr
+		fmt.Println("responseData", responseData)
 	}
 
 	// Return the field values as part of the response
 	return Message{
 		Name: "success",
 		Data: responseData,
-	}, nil
+	}, 0
 }
 
 func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Message, error) {

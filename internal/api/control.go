@@ -59,9 +59,9 @@ func (c *Control) OneCommand(text string) {
 	request.Topic = "req"
 	//fmt.Println("msg ", request)
 	c.SendTo(request)
-	response, _, err := c.ReceiveFrom(1000)
+	response, _, err := c.ReceiveFrom(10000)
 	if err != nil {
-		fmt.Println("timeout, more than 100 msec", response)
+		fmt.Println("timeout, more than 10000 msec", response)
 	} else {
 		fmt.Println(response.Data["result"], response)
 	}
