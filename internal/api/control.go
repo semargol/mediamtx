@@ -63,12 +63,18 @@ func (c *Control) OneCommand(text string) {
 	if err != nil {
 		fmt.Println("timeout, more than 10000 msec", response)
 	} else {
-		fmt.Println(response.Data["result"], response)
+		if response.Data == nil {
+			fmt.Println(c.cmdNumber, "??")
+		} else if response.Data["result"] == "" {
+			fmt.Println(c.cmdNumber, "__", response.Data)
+		} else {
+			fmt.Println(c.cmdNumber, response.Data)
+		}
 	}
 }
 
 func (c *Control) Init(path string) {
-	c.cmdNumber = 100
+	c.cmdNumber = 1000
 	c.PublishAt("req")
 	c.SubscribeAt("res")
 
@@ -96,7 +102,7 @@ func (c *Control) Init(path string) {
 
 func (c *Control) Commands() {
 	for {
-		fmt.Print(">")
+		fmt.Print(c.cmdNumber+1, ">")
 		text, _ := bufio.NewReader(os.Stdin).ReadString('\n')
 		text, _ = strings.CutSuffix(text, "\n")
 		text, _ = strings.CutSuffix(text, "\r")
