@@ -158,6 +158,7 @@ type apiAuthManager interface {
 type apiParent interface {
 	logger.Writer
 	APIConfigSet(conf *conf.Conf)
+	GetConfigChan() <-chan *conf.Conf
 }
 
 // API is an API server.

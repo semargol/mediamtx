@@ -74,6 +74,21 @@ func (t *ApiServer) PublishAt(topic string) {
 func (t *ApiServer) SendEvent(event Message) {
 	t.transceiver.sendTo(event, t.brokerAddr)
 }
+func (s *ApiServer) catchEvent() {
+	var response Message
+	for {
+		select {
+		case <-s.api.Parent.GetConfigChan():
+			response.Name = "msg"
+			response.Topic = "res"
+			response.Data = map[string]string{"Event": "Configuration updated"}
+			s.SendTo(response)
+			fmt.Println("Server Sent response: ", response)
+			response.Topic = "evn"
+			s.SendEvent(response)
+		}
+	}
+}
 
 func (s *ApiServer) Listen() {
 	fmt.Println("Start api server at ", s.endPoint.String(), " with broker at ", s.brokerAddr.String())
@@ -84,6 +99,9 @@ func (s *ApiServer) Listen() {
 	var response Message
 	//var from *net.UDPAddr
 	var err error
+	// Прослушивание канала и печать сообщения при получении данных
+	go s.catchEvent()
+
 	for {
 		request, _, err = s.ReceiveFrom(10)
 		if err == nil {

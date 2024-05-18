@@ -979,3 +979,8 @@ func (p *Core) APIConfigSet(conf *conf.Conf) {
 	case <-p.ctx.Done():
 	}
 }
+
+// APIConfigSet is called by api.
+func (p *Core) GetConfigChan() <-chan *conf.Conf {
+	return p.chAPIConfigSet
+}
