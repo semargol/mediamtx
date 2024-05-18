@@ -228,6 +228,7 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
 		Type:   "sending",
 		Source: "RTPR",
 		RTPR: conf.RTPRConf{VideoURL: "",
+			Name:       "RTPR",
 			AudioURL:   "",
 			VideoCodec: "h264",
 			AudioCodec: "opus",
