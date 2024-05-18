@@ -98,7 +98,7 @@ func ConfigSync(t *ApiServer) {
 	newConf.Paths = nil
 	newConf.OptionalPaths = nil
 	for _, pipeConfig := range t.strmConf.Pipes {
-		if pipeConfig.Source == "RTPR" {
+		if pipeConfig.Source == "RTPR" && pipeConfig.RTPR.VideoURL != "" {
 			newConf.AddPath(pipeConfig.Name, nil)
 			newConf.Validate()
 			setField(newConf.OptionalPaths[pipeConfig.Name], "Source", pipeConfig.RTPR.VideoURL)
@@ -223,9 +223,18 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
 	}
 	// Create a new PipeConfig and add it to the map
 	newPipe := conf.PipeConfig{
-		ID:    id,
-		State: "active", // Example default state
-		Type:  "sending",
+		ID:     id,
+		State:  "active", // Example default state
+		Type:   "sending",
+		Source: "RTPR",
+		RTPR: conf.RTPRConf{VideoURL: "",
+			AudioURL:   "",
+			VideoCodec: "h264",
+			AudioCodec: "opus",
+			VideoPT:    "96",
+			AudioPT:    "97",
+		},
+		Syncs: []string{"sync1"},
 	}
 	if t.strmConf.Pipes == nil {
 		t.strmConf.Pipes = make(map[int]conf.PipeConfig)
