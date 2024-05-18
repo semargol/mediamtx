@@ -4,6 +4,10 @@ type RTPRConf struct {
 	VideoURL   string
 	AudioURL   string
 	VideoCodec string
+	AudioCodec string
+	VideoPT    string
+	AudioPT    string
+	Name       string
 	RunOnReady string
 }
 
@@ -20,11 +24,13 @@ type PipeConfig struct {
 	State  string
 	RTPR   RTPRConf
 	RTPS   RTPSConf
+	Type   string
 }
 
 type RTPSConf struct {
 	VideoPort  int
 	AudioPort  int
+	Name       string
 	VideoCodec string
 }
 

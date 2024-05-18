@@ -225,6 +225,7 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
 	newPipe := conf.PipeConfig{
 		ID:    id,
 		State: "active", // Example default state
+		Type:  "sending",
 	}
 	if t.strmConf.Pipes == nil {
 		t.strmConf.Pipes = make(map[int]conf.PipeConfig)
