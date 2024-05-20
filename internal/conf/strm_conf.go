@@ -5,8 +5,8 @@ type RTPRConf struct {
 	AudioURL   string
 	VideoCodec string
 	AudioCodec string
-	VideoPT    string
-	AudioPT    string
+	VideoPT    int
+	AudioPT    int
 	Name       string
 	RunOnReady string
 }

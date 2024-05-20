@@ -42,51 +42,78 @@ func getError(req *Message, errorCode int) (Message, int) {
 	response.Data["errorMsg"] = getErrorDescription(errorCode, true)
 	return response, errorCode
 }
-
-func setField(p *conf.OptionalPath, fieldName, newValue string) {
+func setField(p *conf.OptionalPath, fieldName string, newValue interface{}) {
 	v := reflect.ValueOf(p.Values)
 
-	// Dereference the pointer if it points to a structure
+	// Dereференс указателя, если он указывает на структуру
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
 
-	// Check if the provided value is valid
+	// Проверка валидности значения
 	if !v.IsValid() {
 		fmt.Println("Provided value is invalid")
 		return
 	}
 
-	// Try to find the field by name in the structure
+	// Поиск поля по имени в структуре
 	field := v.FieldByName(fieldName)
 	if !field.IsValid() {
 		fmt.Println(fieldName + " field is not found in the struct")
 		return
 	}
 
-	// Check and handle if the field is a pointer
+	// Проверка и обработка, если поле является указателем
 	if field.Kind() == reflect.Ptr {
-		// Initialize the field if it is nil
+		// Инициализация поля, если оно равно nil
 		if field.IsNil() {
 			field.Set(reflect.New(field.Type().Elem()))
 		}
 		field = field.Elem()
 	}
 
-	// Ensure the field is of type string
-	if field.Kind() != reflect.String {
-		fmt.Println(fieldName + " field is not a string")
+	// Установка нового значения в зависимости от типа поля
+	switch field.Kind() {
+	case reflect.String:
+		strValue, ok := newValue.(string)
+		if !ok {
+			fmt.Println(fieldName + " field is not a string")
+			return
+		}
+		if !field.CanSet() {
+			fmt.Println("Cannot set " + fieldName + " field")
+			return
+		}
+		field.SetString(strValue)
+
+	case reflect.Int:
+		intValue, ok := newValue.(int)
+		if !ok {
+			fmt.Println(fieldName + " field is not an int")
+			return
+		}
+		if !field.CanSet() {
+			fmt.Println("Cannot set " + fieldName + " field")
+			return
+		}
+		field.SetInt(int64(intValue))
+
+	case reflect.Bool:
+		boolValue, ok := newValue.(bool)
+		if !ok {
+			fmt.Println(fieldName + " field is not a bool")
+			return
+		}
+		if !field.CanSet() {
+			fmt.Println("Cannot set " + fieldName + " field")
+			return
+		}
+		field.SetBool(boolValue)
+
+	default:
+		fmt.Println(fieldName + " field type is not supported")
 		return
 	}
-
-	// Check if the field can be set
-	if !field.CanSet() {
-		fmt.Println("Cannot set " + fieldName + " field")
-		return
-	}
-
-	// Set the new value for the field
-	field.SetString(newValue)
 }
 
 // Configuration synchronization between mediamtx and strm_server
@@ -103,12 +130,14 @@ func ConfigSync(t *ApiServer) {
 			newConf.Validate()
 			setField(newConf.OptionalPaths[pipeConfig.Name], "Source", pipeConfig.RTPR.VideoURL)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "AudioSource", pipeConfig.RTPR.AudioURL)
+			setField(newConf.OptionalPaths[pipeConfig.Name], "VideoCodec", pipeConfig.RTPR.VideoCodec)
+			setField(newConf.OptionalPaths[pipeConfig.Name], "VideoPT", pipeConfig.RTPR.VideoPT)
 			//fmt.Println("AudioSource", pipeConfig.RTPR.AudioURL)
 			newConf.Validate()
 			//fmt.Println("newConf AudioSource", newConf.Paths[pipeConfig.Name].AudioSource)
 		}
 	}
-	//newConf.Validate()del
+	//newConf.Validate()
 	t.api.Conf = &newConf
 	t.api.Parent.APIConfigSet(&newConf)
 }
@@ -232,8 +261,8 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
 			AudioURL:   "",
 			VideoCodec: "h264",
 			AudioCodec: "opus",
-			VideoPT:    "96",
-			AudioPT:    "97",
+			VideoPT:    96,
+			AudioPT:    97,
 		},
 		Syncs: []string{"sync1"},
 	}

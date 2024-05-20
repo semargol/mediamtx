@@ -4,6 +4,7 @@ package rtp
 import (
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
@@ -32,6 +33,9 @@ type packetConn interface {
 type Source struct {
 	ResolvedSource     string
 	ResolvedAudiSource string
+	VideoCodec         string
+	VideoPT            int
+	AudioPT            int
 	ReadTimeout        conf.StringDuration
 	Parent             defs.StaticSourceParent
 }
@@ -78,9 +82,18 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 	videoMedi := &description.Media{
 		Type: description.MediaTypeVideo,
 		Formats: []format.Format{&format.H264{
-			PayloadTyp:        96,
+			PayloadTyp:        uint8(s.VideoPT),
 			PacketizationMode: 1,
 		}},
+	}
+
+	if strings.EqualFold(s.VideoCodec, "h265") {
+		videoMedi = &description.Media{
+			Type: description.MediaTypeVideo,
+			Formats: []format.Format{&format.H265{
+				PayloadTyp: uint8(s.VideoPT),
+			}},
+		}
 	}
 
 	medias := []*description.Media{videoMedi}
@@ -116,7 +129,7 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 		audioMedi := &description.Media{
 			Type: description.MediaTypeAudio,
 			Formats: []format.Format{&format.Opus{
-				PayloadTyp: 97,
+				PayloadTyp: uint8(s.AudioPT),
 				IsStereo:   true,
 			}},
 		}

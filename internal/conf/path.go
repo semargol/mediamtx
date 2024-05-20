@@ -119,6 +119,9 @@ type Path struct {
 
 	// RTP source
 	AudioSource string `json:"audioSource,omitempty"`
+	VideoCodec  string `json:"videoCodec,omitempty"`
+	VideoPT     int    `json:"videoPT,omitempty"`
+	AudioPT     int    `json:"audioPT,omitempty"`
 
 	// RTSP source
 	RTSPTransport       RTSPTransport  `json:"rtspTransport"`
@@ -220,6 +223,10 @@ func (pconf *Path) setDefaults() {
 	pconf.RPICameraAfRange = "normal"
 	pconf.RPICameraAfSpeed = "normal"
 	pconf.RPICameraTextOverlay = "%Y-%m-%d %H:%M:%S - MediaMTX"
+
+	// RTP
+	pconf.VideoPT = 96
+	pconf.AudioPT = 97
 
 	// Hooks
 	pconf.RunOnDemandStartTimeout = 10 * StringDuration(time.Second)

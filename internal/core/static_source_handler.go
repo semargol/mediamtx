@@ -90,6 +90,9 @@ func (s *staticSourceHandler) initialize() {
 		s.instance = &rtpsource.Source{
 			ResolvedSource:     s.resolvedSource,
 			ResolvedAudiSource: s.conf.AudioSource,
+			VideoCodec:         s.conf.VideoCodec,
+			VideoPT:            s.conf.VideoPT,
+			AudioPT:            s.conf.AudioPT,
 			ReadTimeout:        s.readTimeout,
 			Parent:             s,
 		}
