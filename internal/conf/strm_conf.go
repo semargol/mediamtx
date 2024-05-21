@@ -49,7 +49,7 @@ func InitializeDefaultStrmConf() StrmConf {
 	return StrmConf{
 		RTSP: ServerConfig{
 			Address: ":8554",
-			State:   "start",
+			State:   "stop",
 		},
 		/*
 			Pipes: map[int]PipeConfig{

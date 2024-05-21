@@ -76,6 +76,8 @@ func (t *ApiServer) SendEvent(event Message) {
 }
 func (s *ApiServer) catchEvent() {
 	var response Message
+	// s.api.mutex.Lock()
+	// defer s.api.mutex.Unlock()
 	for {
 		select {
 		case <-s.api.Parent.GetConfigChan():
@@ -100,7 +102,7 @@ func (s *ApiServer) Listen() {
 	//var from *net.UDPAddr
 	var err error
 	// Прослушивание канала и печать сообщения при получении данных
-	go s.catchEvent()
+	//go s.catchEvent()
 
 	for {
 		request, _, err = s.ReceiveFrom(10)

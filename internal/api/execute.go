@@ -45,34 +45,28 @@ func getError(req *Message, errorCode int) (Message, int) {
 func setField(p *conf.OptionalPath, fieldName string, newValue interface{}) {
 	v := reflect.ValueOf(p.Values)
 
-	// Dereференс указателя, если он указывает на структуру
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
 
-	// Проверка валидности значения
 	if !v.IsValid() {
 		fmt.Println("Provided value is invalid")
 		return
 	}
 
-	// Поиск поля по имени в структуре
 	field := v.FieldByName(fieldName)
 	if !field.IsValid() {
 		fmt.Println(fieldName + " field is not found in the struct")
 		return
 	}
 
-	// Проверка и обработка, если поле является указателем
 	if field.Kind() == reflect.Ptr {
-		// Инициализация поля, если оно равно nil
 		if field.IsNil() {
 			field.Set(reflect.New(field.Type().Elem()))
 		}
 		field = field.Elem()
 	}
 
-	// Установка нового значения в зависимости от типа поля
 	switch field.Kind() {
 	case reflect.String:
 		strValue, ok := newValue.(string)
@@ -120,16 +114,19 @@ func setField(p *conf.OptionalPath, fieldName string, newValue interface{}) {
 func ConfigSync(t *ApiServer) {
 	t.api.mutex.Lock()
 	defer t.api.mutex.Unlock()
-	newConf := *t.api.Conf
+	//newConf := *t.api.Conf
+	newConf := t.api.Conf.Clone()
 	newConf.SetDefaults()
-	fmt.Println("t.strmConf.RTSP.Address: ", t.strmConf.RTSP.Address)
 	rtspState := strings.ToLower(t.strmConf.RTSP.State)
+	//fmt.Println("rtspState: ", rtspState)
 	switch rtspState {
 	case "start":
 		newConf.RTSP = true
+
 	case "stop":
 		newConf.RTSP = false
 	}
+
 	newConf.RTSPAddress = t.strmConf.RTSP.Address
 	newConf.Paths = nil
 	newConf.OptionalPaths = nil
@@ -142,13 +139,13 @@ func ConfigSync(t *ApiServer) {
 			setField(newConf.OptionalPaths[pipeConfig.Name], "VideoCodec", pipeConfig.RTPR.VideoCodec)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "VideoPT", pipeConfig.RTPR.VideoPT)
 			//fmt.Println("AudioSource", pipeConfig.RTPR.AudioURL)
-			newConf.Validate()
+			//newConf.Validate()
 			//fmt.Println("newConf AudioSource", newConf.Paths[pipeConfig.Name].AudioSource)
 		}
 	}
-	//newConf.Validate()
-	t.api.Conf = &newConf
-	t.api.Parent.APIConfigSet(&newConf)
+	newConf.Validate()
+	t.api.Parent.APIConfigSet(newConf)
+
 }
 
 func ExtractID(msg *Message) (int, error) {
@@ -416,11 +413,6 @@ func ApiSetRtsp(api *ApiServer, req *Message) (Message, int) {
 		field := rtspValue.Field(i)
 		fieldName := strings.ToLower(rtspValueType.Field(i).Name)
 
-		// Skip id field, normalize field name to lowercase
-		if fieldName == "id" {
-			continue
-		}
-
 		if fieldValue, ok := normalizedData[fieldName]; ok && field.CanSet() {
 			// Check and set field by type
 			switch field.Kind() {
@@ -432,7 +424,6 @@ func ApiSetRtsp(api *ApiServer, req *Message) (Message, int) {
 			}
 		}
 	}
-
 	// Save back the modified PipeConfig
 	api.strmConf.RTSP = rtsp
 	ConfigSync(api)

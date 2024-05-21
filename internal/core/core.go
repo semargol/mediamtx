@@ -829,33 +829,33 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 		closePathManager ||
 		closeLogger
 
-	closeAPI := newConf == nil ||
-		newConf.API != p.conf.API ||
-		newConf.APIAddress != p.conf.APIAddress ||
-		newConf.ReadTimeout != p.conf.ReadTimeout ||
-		closeAuthManager ||
-		closePathManager ||
-		closeRTSPServer ||
-		closeRTSPSServer ||
-		closeRTMPServer ||
-		closeHLSServer ||
-		closeWebRTCServer ||
-		closeSRTServer ||
-		closeLogger
+	// closeAPI := newConf == nil ||
+	// 	newConf.API != p.conf.API ||
+	// 	newConf.APIAddress != p.conf.APIAddress ||
+	// 	newConf.ReadTimeout != p.conf.ReadTimeout ||
+	// 	closeAuthManager ||
+	// 	closePathManager ||
+	// 	closeRTSPServer ||
+	// 	closeRTSPSServer ||
+	// 	closeRTMPServer ||
+	// 	closeHLSServer ||
+	// 	closeWebRTCServer ||
+	// 	closeSRTServer ||
+	// 	closeLogger
 
 	if newConf == nil && p.confWatcher != nil {
 		p.confWatcher.Close()
 		p.confWatcher = nil
 	}
 
-	if p.api != nil {
-		if closeAPI {
-			p.api.Close()
-			p.api = nil
-		} else if !calledByAPI { // avoid a loop
-			p.api.ReloadConf(newConf)
-		}
-	}
+	// if p.api != nil {
+	// 	if closeAPI {
+	// 		p.api.Close()
+	// 		p.api = nil
+	// 	} else if !calledByAPI { // avoid a loop
+	// 		p.api.ReloadConf(newConf)
+	// 	}
+	// }
 
 	if closeSRTServer && p.srtServer != nil {
 		if p.metrics != nil {
