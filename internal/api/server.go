@@ -158,11 +158,11 @@ func (s *ApiServer) Listen() {
 			// 	}
 			case "set/rtsp":
 				{
-					response, _ = ApiSetRtsp(s.api, &request)
+					response, _ = ApiSetRtsp(s, &request)
 				}
 			case "get/rtsp":
 				{
-					response, _ = ApiGetRtsp(s.api, &request)
+					response, _ = ApiGetRtsp(s, &request)
 				}
 
 			default:

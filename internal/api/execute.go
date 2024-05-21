@@ -122,6 +122,8 @@ func ConfigSync(t *ApiServer) {
 	defer t.api.mutex.Unlock()
 	newConf := *t.api.Conf
 	newConf.SetDefaults()
+	fmt.Println("t.strmConf.RTSP.Address: ", t.strmConf.RTSP.Address)
+	newConf.RTSPAddress = t.strmConf.RTSP.Address
 	newConf.Paths = nil
 	newConf.OptionalPaths = nil
 	for _, pipeConfig := range t.strmConf.Pipes {
@@ -173,6 +175,8 @@ func DeletePipeByID(t *ApiServer, id int) error {
 }
 
 func ApiUpdatePipeConfig(api *ApiServer, req *Message, configType string) (Message, int) {
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	// Extracting pipe ID from the request
 	id, err := ExtractID(req)
 	if err != nil {
 		return getError(req, 100)
@@ -230,13 +234,12 @@ func ApiUpdatePipeConfig(api *ApiServer, req *Message, configType string) (Messa
 	api.strmConf.Pipes[id] = pipe
 	//fmt.Println("api.strmConf.Pipes[id]: ", api.strmConf.Pipes[id])
 	ConfigSync(api)
-	return Message{
-		Name: "success",
-		Data: map[string]string{"status": "Configuration updated successfully"},
-	}, 0
+	response.Data = map[string]string{"status": "Configuration updated successfully"}
+	return response, 0
 }
 
 func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
 	// Use ExtractID to get the ID from the message
 	id, err := ExtractID(req)
 	if err != nil {
@@ -276,13 +279,8 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
 		return r, e
 	}
 	ConfigSync(t)
-	// Return success message
-	return Message{
-		Name: "success",
-		Data: map[string]string{
-			"status": "Pipe added successfully",
-		},
-	}, 0
+	response.Data = map[string]string{"status": "Pipe added successfully"}
+	return response, 0
 }
 
 func ApiAddRtp(api *API, req *Message) (Message, error) {
@@ -333,6 +331,7 @@ func ApiDelRtsp(api *API, req *Message) (Message, error) {
 
 // ApiSetPipe updates a specific field in the PipeConfig for a given Pipe ID from Message, case-insensitively
 func ApiSetPipe(t *ApiServer, req *Message) (Message, int) {
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
 	// Extracting pipe ID from the request
 	id, err := ExtractID(req)
 	if err != nil {
@@ -380,26 +379,63 @@ func ApiSetPipe(t *ApiServer, req *Message) (Message, int) {
 	// Save back the modified PipeConfig
 	t.strmConf.Pipes[id] = pipe
 	ConfigSync(t)
-	return Message{
-		Name: "success",
-		Data: map[string]string{"status": "pipe updated successfully"},
-	}, 0
+	response.Data = map[string]string{"status": "pipe updated successfully"}
+	return response, 0
 }
 
-func ApiSetRtp(api *API, req *Message) (Message, error) {
-	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
-	response.Data["result"] = "OK"
-	return response, nil
-}
+// func ApiSetRtp(api *API, req *Message) (Message, error) {
+// 	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+// 	response.Data["result"] = "OK"
+// 	return response, nil
+// }
 
-func ApiSetRtsp(api *API, req *Message) (Message, error) {
+func ApiSetRtsp(api *ApiServer, req *Message) (Message, int) {
 	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
-	response.Data["result"] = "OK"
-	return response, nil
+	rtsp := api.strmConf.RTSP
+	// Retrieving the PipeConfig
+
+	// Using reflection to set field dynamically and case-insensitively
+	rtspValue := reflect.ValueOf(&rtsp).Elem()
+	rtspValueType := rtspValue.Type()
+
+	// Normalize incoming data keys to lowercase
+	normalizedData := make(map[string]string)
+	for key, value := range req.Data {
+		normalizedKey := strings.ToLower(key)
+		normalizedData[normalizedKey] = value
+	}
+
+	for i := 0; i < rtspValueType.NumField(); i++ {
+		field := rtspValue.Field(i)
+		fieldName := strings.ToLower(rtspValueType.Field(i).Name)
+
+		// Skip id field, normalize field name to lowercase
+		if fieldName == "id" {
+			continue
+		}
+
+		if fieldValue, ok := normalizedData[fieldName]; ok && field.CanSet() {
+			// Check and set field by type
+			switch field.Kind() {
+			case reflect.String:
+				field.SetString(fieldValue)
+			default:
+				fmt.Println("unsupported field type:", field.Type())
+				continue
+			}
+		}
+	}
+
+	// Save back the modified PipeConfig
+	api.strmConf.RTSP = rtsp
+	ConfigSync(api)
+	response.Data = map[string]string{"status": "rtsp updated successfully"}
+	return response, 0
 }
 
 // ApiGetPipe retrieves the values of specified fields from a PipeConfig in api.strmConf.Pipes by ID.
 func ApiGetPipe(api *ApiServer, req *Message) (Message, int) {
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
 	// Extract the pipe ID from the request
 	id, err := ExtractID(req)
 	if err != nil {
@@ -411,8 +447,6 @@ func ApiGetPipe(api *ApiServer, req *Message) (Message, int) {
 	if !exists {
 		return getError(req, 101)
 	}
-
-	responseData := map[string]string{}
 
 	// Iterate over each data key in the request (these are field names)
 	v := reflect.ValueOf(&pipe).Elem()
@@ -449,18 +483,15 @@ func ApiGetPipe(api *ApiServer, req *Message) (Message, int) {
 			return getError(req, 104)
 		}
 
-		responseData[strings.ToLower(fieldName)] = valueStr
-		fmt.Println("responseData", responseData)
+		response.Data[strings.ToLower(fieldName)] = valueStr
 	}
 
 	// Return the field values as part of the response
-	return Message{
-		Name: "success",
-		Data: responseData,
-	}, 0
+	return response, 0
 }
 
 func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Message, int) {
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
 	id, err := ExtractID(req)
 	if err != nil {
 		return getError(req, 100)
@@ -478,7 +509,6 @@ func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Mess
 		return getError(req, 104)
 	}
 
-	responseData := make(map[string]string)
 	// Create a map to match lowercased field names to reflect.Value fields
 	fieldsMap := make(map[string]reflect.Value)
 	fType := subConfigField.Type()
@@ -513,19 +543,56 @@ func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Mess
 			return getError(req, 105)
 		}
 
-		responseData[strings.ToLower(fieldName)] = valueStr
+		response.Data[strings.ToLower(fieldName)] = valueStr
 	}
 
-	return Message{
-		Name: "success",
-		Data: responseData,
-	}, 0
+	return response, 0
 }
 
-func ApiGetRtsp(api *API, req *Message) (Message, error) {
+func ApiGetRtsp(api *ApiServer, req *Message) (Message, int) {
+	rtsp := api.strmConf.RTSP
 	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
-	globals(api, &response)
-	return response, nil
+
+	// Iterate over each data key in the request (these are field names)
+	v := reflect.ValueOf(&rtsp).Elem()
+	fieldsMap := make(map[string]reflect.Value)
+	fType := v.Type()
+	for i := 0; i < fType.NumField(); i++ {
+		fieldName := fType.Field(i).Name
+		fieldsMap[strings.ToLower(fieldName)] = v.FieldByName(fieldName)
+	}
+	for key := range req.Data {
+		lowerKey := strings.ToLower(key)
+		if lowerKey == "id" {
+			continue // skip the ID field
+		}
+
+		fieldName := strings.ToLower(lowerKey) // Assume field names are in correct case
+		fieldValue := fieldsMap[lowerKey]
+		if !fieldValue.IsValid() {
+			return getError(req, 104)
+		}
+
+		// Convert the field value to a string representation
+		var valueStr string
+		switch fieldValue.Kind() {
+		case reflect.String:
+			valueStr = fieldValue.String()
+		case reflect.Int, reflect.Int32, reflect.Int64:
+			valueStr = strconv.FormatInt(fieldValue.Int(), 10)
+		// case reflect.Float32, reflect.Float64:
+		// 	valueStr = strconv.FormatFloat(fieldValue.Float(), 'f', -1, 64)
+		case reflect.Bool:
+			valueStr = strconv.FormatBool(fieldValue.Bool())
+		default:
+			return getError(req, 104)
+		}
+
+		response.Data[strings.ToLower(fieldName)] = valueStr
+	}
+
+	// Return the field values as part of the response
+	return response, 0
 }
 
 /*

@@ -41,12 +41,17 @@ type StrmConf struct {
 }
 
 type ServerConfig struct {
-	Port  int
-	State string
+	Address string
+	State   string
 }
 
 func InitializeDefaultStrmConf() StrmConf {
-	return StrmConf{ /*
+	return StrmConf{
+		RTSP: ServerConfig{
+			Address: ":8554",
+			State:   "start",
+		},
+		/*
 			Pipes: map[int]PipeConfig{
 				1: {ID: 1,
 					Name:   "pipe1",
