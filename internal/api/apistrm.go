@@ -5,7 +5,7 @@ import (
 )
 
 type StreamApiServer struct {
-	broker *ApiBroker
+	//broker *ApiBroker
 	server *ApiServer
 }
 
@@ -24,9 +24,9 @@ func NewStreamApiServer(network string, address string, readTimeout time.Duratio
 	//h = &handlerExitOnPanic{h}
 
 	s := &StreamApiServer{}
-	s.broker = NewApiBroker("127.0.0.1:7000")
+	//s.broker = NewApiBroker("127.0.0.1:7000")
 	s.server = NewApiServer("127.0.0.1:7001", "127.0.0.1:7000", api)
-	go s.broker.Listen()
+	//go s.broker.Listen()
 	go s.server.Listen()
 
 	//c := NewControl("127.0.0.1:7002", "127.0.0.1:7000")
@@ -35,4 +35,8 @@ func NewStreamApiServer(network string, address string, readTimeout time.Duratio
 	//c.Once()
 
 	return s, nil
+}
+
+func (s *StreamApiServer) Close() {
+	_ = s.server.udpConn.Close()
 }

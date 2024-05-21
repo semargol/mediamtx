@@ -284,6 +284,7 @@ func (a *API) Initialize() error {
 func (a *API) Close() {
 	a.Log(logger.Info, "listener is closing")
 	a.httpServer.Close()
+	a.strmServer.Close()
 }
 
 // Log implements logger.Writer.
