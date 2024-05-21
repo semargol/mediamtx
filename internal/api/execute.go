@@ -123,6 +123,13 @@ func ConfigSync(t *ApiServer) {
 	newConf := *t.api.Conf
 	newConf.SetDefaults()
 	fmt.Println("t.strmConf.RTSP.Address: ", t.strmConf.RTSP.Address)
+	rtspState := strings.ToLower(t.strmConf.RTSP.State)
+	switch rtspState {
+	case "start":
+		newConf.RTSP = true
+	case "stop":
+		newConf.RTSP = false
+	}
 	newConf.RTSPAddress = t.strmConf.RTSP.Address
 	newConf.Paths = nil
 	newConf.OptionalPaths = nil
