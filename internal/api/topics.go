@@ -1,53 +1,50 @@
 package api
 
-import (
-	"net"
-)
-
 type TopicList struct {
-	topicMap map[string]*Topic
+	TopicMap map[string]*Topic
 }
 
 func newTopicList() TopicList {
 	return TopicList{make(map[string]*Topic)}
 }
 
-func (this *TopicList) subscribe(name string, addr *net.UDPAddr) {
-	topic, ok := this.topicMap[name]
+func (this *TopicList) subscribe(name string, addr string) {
+	topic, ok := this.TopicMap[name]
 	if !ok {
 		topic = newTopic(name)
-		this.topicMap[name] = topic
+		this.TopicMap[name] = topic
 	}
 	topic.addSubscriber(addr)
 }
 
-func (this *TopicList) publish(name string, addr *net.UDPAddr) {
-	topic, ok := this.topicMap[name]
+func (this *TopicList) publish(name string, addr string) {
+	topic, ok := this.TopicMap[name]
 	if !ok {
 		topic = newTopic(name)
-		this.topicMap[name] = topic
+		this.TopicMap[name] = topic
 	}
 	topic.addPublisher(addr)
 }
 
-func (this *TopicList) unsubscribe(name string, addr *net.UDPAddr) {
-	topic, ok := this.topicMap[name]
+func (this *TopicList) unsubscribe(name string, addr string) {
+	topic, ok := this.TopicMap[name]
 	if ok {
 		topic.delSubscriber(addr)
 	}
 }
 
-func (this *TopicList) unpublish(name string, addr *net.UDPAddr) {
-	topic, ok := this.topicMap[name]
+func (this *TopicList) unpublish(name string, addr string) {
+	topic, ok := this.TopicMap[name]
 	if ok {
 		topic.delPublisher(addr)
 	}
 }
 
-func (this *TopicList) push(msg Message, from *net.UDPAddr, trans *transceiver) {
+/*
+func (this *TopicList) push(msg Message, from string, trans *transceiver) {
 	//fmt.Println("push msg:", msg)
-	if this.topicMap == nil {
-		this.topicMap = make(map[string]*Topic)
+	if this.TopicMap == nil {
+		this.TopicMap = make(map[string]*Topic)
 	}
 	switch msg.Name {
 	case "pub":
@@ -58,9 +55,10 @@ func (this *TopicList) push(msg Message, from *net.UDPAddr, trans *transceiver) 
 		this.unsubscribe(msg.Topic, from)
 		this.unpublish(msg.Topic, from)
 	case "msg":
-		topic, ok := this.topicMap[msg.Topic]
+		topic, ok := this.TopicMap[msg.Topic]
 		if ok {
-			trans.sendToAll(msg, topic.SubscriberList)
+			//trans.sendToAll(msg, topic.SubscriberList)
 		}
 	}
 }
+*/
