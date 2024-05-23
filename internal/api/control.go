@@ -24,8 +24,9 @@ var fromBroker = make(chan *Message, 10)
 // var toBroker = make(chan *Message)
 var fromConsole = make(chan *Message, 10)
 
-func OpenBrokerConnection() {
-	u := url.URL{Scheme: "ws", Host: ":7002", Path: "/strm"}
+func OpenBrokerConnection(addr string, path string) {
+	//u := url.URL{Scheme: "ws", Host: ":7002", Path: "/strm"}
+	u := url.URL{Scheme: "ws", Host: addr, Path: path}
 	log.Printf("CTRL connecting to %s", u.String())
 
 	var err error = nil
@@ -104,8 +105,8 @@ func ConsoleReader() {
 	CloseConsoleReader()
 }
 
-func RunControl() {
-	OpenBrokerConnection()
+func RunControl(addr string, path string) {
+	OpenBrokerConnection(addr, path)
 	go RunBrokerReader()
 	go ConsoleReader()
 

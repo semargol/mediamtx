@@ -12,5 +12,5 @@ func main() {
 		}
 		c.Commands()
 	*/
-	api.RunControl()
+	api.RunControl(":7000", "/strm") // message broker URL is ws://127.0.0.1:7000/strm
 }
