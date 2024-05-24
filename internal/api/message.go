@@ -35,17 +35,27 @@ func (msg *Message) Parse(text string) {
 	}
 	words := strings.Split(text, " ")
 	msg.Name = "msg"
-	if len(words) > 0 {
-		verb = words[0]
-		msg.Verb = verb
-	}
-	if len(words) > 1 {
-		noun = words[1]
-		msg.Noun = noun
-		msg.Topic = verb + "/" + noun
-	}
 	var n int
-	n = 2
+	n = 0
+	if n < len(words) {
+		if !strings.Contains(words[n], "=") {
+			verb = words[n]
+			msg.Verb = verb
+			n++
+		} else {
+			msg.Verb = ""
+		}
+	}
+	if n < len(words) {
+		if !strings.Contains(words[n], "=") {
+			noun = words[n]
+			msg.Noun = noun
+			n++
+		} else {
+			msg.Noun = ""
+		}
+	}
+	msg.Topic = verb + "/" + noun
 	for {
 		if n < len(words) {
 			key, value, _ := strings.Cut(words[n], "=")

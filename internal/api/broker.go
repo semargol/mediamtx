@@ -24,7 +24,7 @@ func init() {
 }
 
 func OpenControlConnection() {
-	http.HandleFunc("/strm", strm)
+	http.HandleFunc("/ci", strm)
 	//http.HandleFunc("/", home)
 	err := http.ListenAndServe(":7002", nil)
 	if err != nil {
@@ -35,6 +35,10 @@ func OpenControlConnection() {
 var controlBrokerUpgrader = websocket.Upgrader{} // use default options
 
 func strm(w http.ResponseWriter, r *http.Request) {
+	if controlConnection != nil {
+		log.Print("Only one control connection allowed")
+		return
+	}
 	var err error = nil
 	controlConnection, err = controlBrokerUpgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -68,6 +72,8 @@ func RunControlReader() {
 		mt, buf, err := controlConnection.ReadMessage()
 		if err != nil || mt != websocket.TextMessage {
 			log.Println("controlBrokerReadError:", err)
+			//CloseControlConnection()  will be closed in strm
+			//controlConnection = nil
 			break
 		}
 

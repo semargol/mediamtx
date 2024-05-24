@@ -89,7 +89,7 @@ func RunConsoleReader() {
 		cmdNumber++
 		msg.Corr = cmdNumber
 		msg.Topic = "req"
-		fmt.Println(msg) //%s, type: %d", message, mt)
+		//fmt.Println(msg) //%s, type: %d", message, mt)
 		fromConsole <- msg
 		time.Sleep(50 * time.Millisecond)
 	}
@@ -115,20 +115,29 @@ func RunControl(addr string, path string) {
 	//var pub Message = Message{0, "pub", "req", "", "", make(map[string]string)}
 	//_ = connection.WriteMessage(websocket.TextMessage, []byte(pub.String()))
 
-	fromConsole <- &Message{0, "sub", "res", "", "", make(map[string]string)}
-	fromConsole <- &Message{0, "pub", "req", "", "", make(map[string]string)}
+	fromConsole <- &Message{0, "sub", "res", "sub", "", make(map[string]string)}
+	fromConsole <- &Message{0, "pub", "req", "pub", "", make(map[string]string)}
 
 	for {
 		select {
-		case msg := <-fromBroker:
-			fmt.Println(msg.Corr, " ", msg)
-			//fmt.Println("ReadFromBroker: ", msg)
+		//case msg := <-fromBroker:
+		//fmt.Println(msg.Corr, " ", msg)
+		//fmt.Println("ReadFromBroker: ", msg)
+		//	break
 		case msg := <-fromConsole:
+			onReceive_requestChannel(msg, nil)
 			bytes, _ := json.Marshal(msg)
 			err := connection.WriteMessage(websocket.TextMessage, bytes)
 			if err != nil {
-				log.Println("WriteToBrokerError:", err)
+				//log.Println("WriteToBrokerError:", err)
+				CloseBrokerConnection()
+				OpenBrokerConnection(addr, path)
+				err = connection.WriteMessage(websocket.TextMessage, bytes)
+				if err != nil {
+					log.Println("WriteToBrokerError:", err)
+				}
 			}
+			break
 		case <-interrupt:
 			log.Println("interrupt")
 			return

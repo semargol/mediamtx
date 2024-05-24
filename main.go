@@ -19,6 +19,7 @@ func main() {
 	if !ok {
 		os.Exit(1)
 	}
+	//api.RunControl(":7002", "/ci")
 	//c := api.NewControl("127.0.0.1:7002", "127.0.0.1:7000")
 	//go c.Once()
 
