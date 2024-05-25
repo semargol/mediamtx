@@ -147,7 +147,6 @@ func ConfigSync(t *ApiServer) {
 	}
 	newConf.Validate()
 	t.api.Parent.APIConfigSet(newConf)
-
 }
 
 func ExtractID(msg *Message) (int, error) {

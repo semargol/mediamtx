@@ -81,6 +81,7 @@ type Server struct {
 	ExternalCmdPool     *externalcmd.Pool
 	PathManager         serverPathManager
 	Parent              serverParent
+	EventsChan          chan string
 
 	ctx       context.Context
 	ctxCancel func()
@@ -132,7 +133,7 @@ func (s *Server) Initialize() error {
 	}
 
 	s.Log(logger.Info, "listener opened on %s", printAddresses(s.srv))
-
+	s.EventsChan <- fmt.Sprintf("RTSP server started at %s", printAddresses(s.srv))
 	s.wg.Add(1)
 	go s.run()
 
@@ -153,6 +154,7 @@ func (s *Server) Log(level logger.Level, format string, args ...interface{}) {
 // Close closes the server.
 func (s *Server) Close() {
 	s.Log(logger.Info, "listener is closing")
+	s.EventsChan <- "RTSP server closing"
 	s.ctxCancel()
 	s.wg.Wait()
 }
@@ -202,6 +204,7 @@ func (s *Server) OnConnOpen(ctx *gortsplib.ServerHandlerOnConnOpenCtx) {
 	s.mutex.Unlock()
 
 	ctx.Conn.SetUserData(c)
+	s.EventsChan <- fmt.Sprintf("RTSP new connection by %v", c.rconn.NetConn().RemoteAddr())
 }
 
 // OnConnClose implements gortsplib.ServerHandlerOnConnClose.
@@ -211,6 +214,7 @@ func (s *Server) OnConnClose(ctx *gortsplib.ServerHandlerOnConnCloseCtx) {
 	delete(s.conns, ctx.Conn)
 	s.mutex.Unlock()
 	c.onClose(ctx.Error)
+	s.EventsChan <- fmt.Sprintf("RTSP destroyed connection: %v", c.rconn.NetConn().RemoteAddr())
 }
 
 // OnRequest implements gortsplib.ServerHandlerOnRequest.

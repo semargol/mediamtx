@@ -159,6 +159,7 @@ type apiParent interface {
 	logger.Writer
 	APIConfigSet(conf *conf.Conf)
 	GetConfigChan() <-chan *conf.Conf
+	GetRTSPServer() *rtsp.Server
 }
 
 // API is an API server.

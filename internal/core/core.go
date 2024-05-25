@@ -399,6 +399,7 @@ func (p *Core) createResources(initial bool) error {
 			ExternalCmdPool:     p.externalCmdPool,
 			PathManager:         p.pathManager,
 			Parent:              p,
+			EventsChan:          make(chan string, 100),
 		}
 		err := i.Initialize()
 		if err != nil {
@@ -983,4 +984,8 @@ func (p *Core) APIConfigSet(conf *conf.Conf) {
 // APIConfigSet is called by api.
 func (p *Core) GetConfigChan() <-chan *conf.Conf {
 	return p.chAPIConfigSet
+}
+
+func (c *Core) GetRTSPServer() *rtsp.Server {
+	return c.rtspServer
 }

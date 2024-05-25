@@ -1,8 +1,11 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net"
+	"sync"
+	"time"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
 )
@@ -13,7 +16,11 @@ func CreateServerAndListen(sep string, bep string, api *API) {
 }
 
 func NewApiServer(serverEp string, brokerEp string, api *API) *ApiServer {
+	ctx, cancel := context.WithCancel(context.Background())
 	var s *ApiServer = new(ApiServer)
+	s.ctx = ctx
+	s.cancel = cancel
+
 	defaultStrmConf := conf.InitializeDefaultStrmConf()
 	s.strmConf = &defaultStrmConf
 	s.transceiver.open(serverEp)
@@ -26,6 +33,7 @@ func NewApiServer(serverEp string, brokerEp string, api *API) *ApiServer {
 	s.api = api
 
 	//ConfigSync(s)
+
 	return s
 }
 
@@ -48,6 +56,11 @@ type ApiServer struct {
 	brokerAddr *net.UDPAddr
 	api        *API
 	strmConf   *conf.StrmConf
+	eventsChan chan string
+	ctx        context.Context
+	mutex      sync.Mutex
+	cancel     func()
+	respev     Message
 }
 
 func (t *ApiServer) SendTo(msg Message) {
@@ -74,22 +87,58 @@ func (t *ApiServer) PublishAt(topic string) {
 func (t *ApiServer) SendEvent(event Message) {
 	t.transceiver.sendTo(event, t.brokerAddr)
 }
-func (s *ApiServer) catchEvent() {
-	var response Message
-	// s.api.mutex.Lock()
-	// defer s.api.mutex.Unlock()
-	for {
-		select {
-		case <-s.api.Parent.GetConfigChan():
-			response.Name = "msg"
-			response.Topic = "res"
-			response.Data = map[string]string{"Event": "Configuration updated"}
-			s.SendTo(response)
-			fmt.Println("Server Sent response: ", response)
-			response.Topic = "evn"
-			s.SendEvent(response)
+
+func (s *ApiServer) getEventsChan() chan string {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	return s.eventsChan
+}
+
+func (s *ApiServer) SetEventsChan(newChan chan string) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.eventsChan = newChan
+}
+
+func (s *ApiServer) StartEventListener() {
+	go func() {
+		for {
+			select {
+			case event := <-s.getEventsChan():
+				eventMsg := Message{0, "msg", "evn", "", "", make(map[string]string)}
+				eventMsg.Data = map[string]string{"status": event}
+				s.SendEvent(eventMsg)
+				fmt.Println("event: ", eventMsg)
+			case <-s.ctx.Done():
+				return
+			default:
+				break
+			}
 		}
-	}
+	}()
+}
+
+func (s *ApiServer) updateEventsChan() {
+	go func() {
+		var prevEventsChan chan string
+		for {
+			select {
+			case <-s.ctx.Done():
+				return
+			default:
+				r := s.api.Parent.GetRTSPServer()
+				if r != nil && r.EventsChan != nil {
+					if r.EventsChan != prevEventsChan {
+						// fmt.Println("r.EventsChan: ", r.EventsChan)
+						s.SetEventsChan(r.EventsChan)
+						prevEventsChan = r.EventsChan
+					}
+				}
+				// Sleep for a while before checking again
+				time.Sleep(100 * time.Millisecond)
+			}
+		}
+	}()
 }
 
 func (s *ApiServer) Listen() {
@@ -99,19 +148,14 @@ func (s *ApiServer) Listen() {
 	s.SubscribeAt("req")
 	var request Message
 	var response Message
+	s.updateEventsChan()
+	s.StartEventListener()
 	//var from *net.UDPAddr
 	var err error
-	// Прослушивание канала и печать сообщения при получении данных
-	//go s.catchEvent()
-
 	for {
 		request, _, err = s.ReceiveFrom(10)
 		if err == nil {
 			fmt.Println("request: ", request)
-			//println("Server Received request: ", request.String())
-			if request.Verb == "init" {
-				ConfigSync(s)
-			}
 			switch request.Verb + "/" + request.Noun {
 			case "add/pipe":
 				{
