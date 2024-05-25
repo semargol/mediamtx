@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"sync"
 	"time"
@@ -156,6 +157,18 @@ func (s *ApiServer) Listen() {
 		request, _, err = s.ReceiveFrom(10)
 		if err == nil {
 			fmt.Println("request: ", request)
+			if request.Verb == "test" {
+				jsonConf, readableConf, err := GetStrmConfig(s)
+				if err != nil {
+					log.Fatalf("Error getting stream config: %v", err)
+				}
+
+				fmt.Println("JSON Configuration:")
+				fmt.Println(jsonConf)
+
+				fmt.Println("\nReadable Configuration:")
+				fmt.Println(readableConf)
+			}
 			switch request.Verb + "/" + request.Noun {
 			case "add/pipe":
 				{

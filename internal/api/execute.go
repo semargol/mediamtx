@@ -149,6 +149,17 @@ func ConfigSync(t *ApiServer) {
 	t.api.Parent.APIConfigSet(newConf)
 }
 
+func GetStrmConfig(t *ApiServer) (string, string, error) {
+	jsonData, err := json.MarshalIndent(t.strmConf, "", "  ")
+	if err != nil {
+		return "", "", err
+	}
+
+	readableStrmConf := fmt.Sprintf("%+v", t.strmConf)
+
+	return string(jsonData), readableStrmConf, nil
+}
+
 func ExtractID(msg *Message) (int, error) {
 	if msg == nil {
 		return 0, errorf("Message is nil")
