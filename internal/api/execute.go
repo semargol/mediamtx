@@ -117,6 +117,7 @@ func ConfigSync(t *ApiServer) {
 	//newConf := *t.api.Conf
 	newConf := t.api.Conf.Clone()
 	newConf.SetDefaults()
+	newConf.LogLevel = 4
 	rtspState := strings.ToLower(t.strmConf.RTSP.State)
 	//fmt.Println("rtspState: ", rtspState)
 	switch rtspState {
