@@ -1,0 +1,423 @@
+asyncapi: 3.0.0
+info:
+  title: STRM Streaming Server
+  version: '1.0.7'
+  description: STRM - RTSP Streaming Server
+  license:
+    name: Proprietary
+    url: https://www.scotty.com/license
+servers:
+  production:
+    host: 127.0.0.1:7000
+    protocol: gomq
+    description: Embedded GOMQ broker
+channels:
+  requestChannel:
+    title: requestChannel
+    address: requestChannel
+    servers:
+      - $ref: '#/servers/production'
+    messages:
+      addpipe:
+        description: addpipe
+        payload:
+          type: object
+          title: addpipe
+          properties:
+            commentId:
+              type: string
+              description: Description
+            dir:
+              type: string
+              description: dir=genyml.ApiListAttribute
+            id:
+              type: string
+              description: id=genyml.ApiRangeAttribute
+            noun:
+              type: string
+              description: noun=genyml.ApiSimpleAttribute
+            verb:
+              type: string
+              description: verb=genyml.ApiSimpleAttribute
+      delpipe:
+        description: delpipe
+        payload:
+          type: object
+          title: delpipe
+          properties:
+            commentId:
+              type: string
+              description: Description
+            id:
+              type: string
+              description: id=genyml.ApiRangeAttribute
+            noun:
+              type: string
+              description: noun=genyml.ApiSimpleAttribute
+            verb:
+              type: string
+              description: verb=genyml.ApiSimpleAttribute
+      getpipe:
+        description: getpipe
+        payload:
+          type: object
+          title: getpipe
+          properties:
+            commentId:
+              type: string
+              description: Description
+            dir:
+              type: string
+              description: dir=genyml.ApiSimpleAttribute
+            id:
+              type: string
+              description: id=genyml.ApiRangeAttribute
+            noun:
+              type: string
+              description: noun=genyml.ApiSimpleAttribute
+            sink:
+              type: string
+              description: sink=genyml.ApiSimpleAttribute
+            source:
+              type: string
+              description: source=genyml.ApiSimpleAttribute
+            state:
+              type: string
+              description: state=genyml.ApiSimpleAttribute
+            verb:
+              type: string
+              description: verb=genyml.ApiSimpleAttribute
+      getrtpr:
+        description: getrtpr
+        payload:
+          type: object
+          title: getrtpr
+          properties:
+            commentId:
+              type: string
+              description: Description
+            acodec:
+              type: string
+              description: acodec=genyml.ApiSimpleAttribute
+            id:
+              type: string
+              description: id=genyml.ApiRangeAttribute
+            noun:
+              type: string
+              description: noun=genyml.ApiSimpleAttribute
+            port:
+              type: string
+              description: port=genyml.ApiSimpleAttribute
+            pt:
+              type: string
+              description: pt=genyml.ApiSimpleAttribute
+            vcodec:
+              type: string
+              description: vcodec=genyml.ApiSimpleAttribute
+            verb:
+              type: string
+              description: verb=genyml.ApiSimpleAttribute
+      getrtps:
+        description: getrtps
+        payload:
+          type: object
+          title: getrtps
+          properties:
+            commentId:
+              type: string
+              description: Description
+            acodec:
+              type: string
+              description: acodec=genyml.ApiSimpleAttribute
+            id:
+              type: string
+              description: id=genyml.ApiRangeAttribute
+            noun:
+              type: string
+              description: noun=genyml.ApiSimpleAttribute
+            port:
+              type: string
+              description: port=genyml.ApiSimpleAttribute
+            pt:
+              type: string
+              description: pt=genyml.ApiSimpleAttribute
+            vcodec:
+              type: string
+              description: vcodec=genyml.ApiSimpleAttribute
+            verb:
+              type: string
+              description: verb=genyml.ApiSimpleAttribute
+      getrtspcl:
+        description: getrtspcl
+        payload:
+          type: object
+          title: getrtspcl
+          properties:
+            commentId:
+              type: string
+              description: Description
+            id:
+              type: string
+              description: id=genyml.ApiRangeAttribute
+            noun:
+              type: string
+              description: noun=genyml.ApiSimpleAttribute
+            url:
+              type: string
+              description: url=genyml.ApiSimpleAttribute
+            verb:
+              type: string
+              description: verb=genyml.ApiSimpleAttribute
+      getrtspsrv:
+        description: getrtspsrv
+        payload:
+          type: object
+          title: getrtspsrv
+          properties:
+            commentId:
+              type: string
+              description: Description
+            id:
+              type: string
+              description: id=genyml.ApiRangeAttribute
+            noun:
+              type: string
+              description: noun=genyml.ApiSimpleAttribute
+            path:
+              type: string
+              description: path=genyml.ApiSimpleAttribute
+            verb:
+              type: string
+              description: verb=genyml.ApiSimpleAttribute
+      setpipe:
+        description: setpipe
+        payload:
+          type: object
+          title: setpipe
+          properties:
+            commentId:
+              type: string
+              description: Description
+            id:
+              type: string
+              description: id=genyml.ApiRangeAttribute
+            noun:
+              type: string
+              description: noun=genyml.ApiSimpleAttribute
+            state:
+              type: string
+              description: state=genyml.ApiListAttribute
+            verb:
+              type: string
+              description: verb=genyml.ApiSimpleAttribute
+      setrtpr:
+        description: setrtpr
+        payload:
+          type: object
+          title: setrtpr
+          properties:
+            commentId:
+              type: string
+              description: Description
+            acodec:
+              type: string
+              description: acodec=genyml.ApiSimpleAttribute
+            id:
+              type: string
+              description: id=genyml.ApiRangeAttribute
+            noun:
+              type: string
+              description: noun=genyml.ApiSimpleAttribute
+            port:
+              type: string
+              description: port=genyml.ApiRangeAttribute
+            pt:
+              type: string
+              description: pt=genyml.ApiRangeAttribute
+            vcodec:
+              type: string
+              description: vcodec=genyml.ApiListAttribute
+            verb:
+              type: string
+              description: verb=genyml.ApiSimpleAttribute
+      setrtps:
+        description: setrtps
+        payload:
+          type: object
+          title: setrtps
+          properties:
+            commentId:
+              type: string
+              description: Description
+            acodec:
+              type: string
+              description: acodec=genyml.ApiSimpleAttribute
+            id:
+              type: string
+              description: id=genyml.ApiRangeAttribute
+            noun:
+              type: string
+              description: noun=genyml.ApiSimpleAttribute
+            port:
+              type: string
+              description: port=genyml.ApiRangeAttribute
+            pt:
+              type: string
+              description: pt=genyml.ApiRangeAttribute
+            vcodec:
+              type: string
+              description: vcodec=genyml.ApiListAttribute
+            verb:
+              type: string
+              description: verb=genyml.ApiSimpleAttribute
+      setrtspcl:
+        description: setrtspcl
+        payload:
+          type: object
+          title: setrtspcl
+          properties:
+            commentId:
+              type: string
+              description: Description
+            id:
+              type: string
+              description: id=genyml.ApiRangeAttribute
+            noun:
+              type: string
+              description: noun=genyml.ApiSimpleAttribute
+            url:
+              type: string
+              description: url=genyml.ApiSimpleAttribute
+            verb:
+              type: string
+              description: verb=genyml.ApiSimpleAttribute
+      setrtspsrv:
+        description: setrtspsrv
+        payload:
+          type: object
+          title: setrtspsrv
+          properties:
+            commentId:
+              type: string
+              description: Description
+            id:
+              type: string
+              description: id=genyml.ApiRangeAttribute
+            noun:
+              type: string
+              description: noun=genyml.ApiSimpleAttribute
+            path:
+              type: string
+              description: path=genyml.ApiSimpleAttribute
+            verb:
+              type: string
+              description: verb=genyml.ApiSimpleAttribute
+operations:
+  onaddpipe:
+    title: addpipe
+    summary: addpipe
+    description: addpipe
+    action: receive
+    channel:
+      $ref: '#/channels/requestChannel'
+    messages:
+      - $ref: '#/channels/requestChannel/messages/addpipe'
+  ondelpipe:
+    title: delpipe
+    summary: delpipe
+    description: delpipe
+    action: receive
+    channel:
+      $ref: '#/channels/requestChannel'
+    messages:
+      - $ref: '#/channels/requestChannel/messages/delpipe'
+  ongetpipe:
+    title: getpipe
+    summary: getpipe
+    description: getpipe
+    action: receive
+    channel:
+      $ref: '#/channels/requestChannel'
+    messages:
+      - $ref: '#/channels/requestChannel/messages/getpipe'
+  ongetrtpr:
+    title: getrtpr
+    summary: getrtpr
+    description: getrtpr
+    action: receive
+    channel:
+      $ref: '#/channels/requestChannel'
+    messages:
+      - $ref: '#/channels/requestChannel/messages/getrtpr'
+  ongetrtps:
+    title: getrtps
+    summary: getrtps
+    description: getrtps
+    action: receive
+    channel:
+      $ref: '#/channels/requestChannel'
+    messages:
+      - $ref: '#/channels/requestChannel/messages/getrtps'
+  ongetrtspcl:
+    title: getrtspcl
+    summary: getrtspcl
+    description: getrtspcl
+    action: receive
+    channel:
+      $ref: '#/channels/requestChannel'
+    messages:
+      - $ref: '#/channels/requestChannel/messages/getrtspcl'
+  ongetrtspsrv:
+    title: getrtspsrv
+    summary: getrtspsrv
+    description: getrtspsrv
+    action: receive
+    channel:
+      $ref: '#/channels/requestChannel'
+    messages:
+      - $ref: '#/channels/requestChannel/messages/getrtspsrv'
+  onsetpipe:
+    title: setpipe
+    summary: setpipe
+    description: setpipe
+    action: receive
+    channel:
+      $ref: '#/channels/requestChannel'
+    messages:
+      - $ref: '#/channels/requestChannel/messages/setpipe'
+  onsetrtpr:
+    title: setrtpr
+    summary: setrtpr
+    description: setrtpr
+    action: receive
+    channel:
+      $ref: '#/channels/requestChannel'
+    messages:
+      - $ref: '#/channels/requestChannel/messages/setrtpr'
+  onsetrtps:
+    title: setrtps
+    summary: setrtps
+    description: setrtps
+    action: receive
+    channel:
+      $ref: '#/channels/requestChannel'
+    messages:
+      - $ref: '#/channels/requestChannel/messages/setrtps'
+  onsetrtspcl:
+    title: setrtspcl
+    summary: setrtspcl
+    description: setrtspcl
+    action: receive
+    channel:
+      $ref: '#/channels/requestChannel'
+    messages:
+      - $ref: '#/channels/requestChannel/messages/setrtspcl'
+  onsetrtspsrv:
+    title: setrtspsrv
+    summary: setrtspsrv
+    description: setrtspsrv
+    action: receive
+    channel:
+      $ref: '#/channels/requestChannel'
+    messages:
+      - $ref: '#/channels/requestChannel/messages/setrtspsrv'

@@ -15,7 +15,7 @@ func main() {
 	if !ok {
 		os.Exit(1)
 	}
-	//api.RunControl(":7002", "/ci")
+	//control.RunControl(":7002", "/ci", "ci.ini")
 
 	s.Wait()
 }

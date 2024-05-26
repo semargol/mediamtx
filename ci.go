@@ -1,16 +1,14 @@
 package main
 
-import "github.com/bluenviron/mediamtx/internal/api"
+import (
+	"github.com/bluenviron/mediamtx/control"
+	"os"
+)
 
-func ci_main() {
-	/*
-		c := api.NewControl("127.0.0.1:7002", "127.0.0.1:7000")
-		if len(os.Args) > 1 {
-			c.Init(os.Args[1])
-		} else {
-			c.Init("")
-		}
-		c.Commands()
-	*/
-	api.RunControl(":7002", "/ci") // message broker URL is ws://127.0.0.1:7000/ci
+func main() {
+	if len(os.Args) > 1 {
+		control.RunControl(":7002", "/ci", os.Args[1])
+	} else {
+		control.RunControl(":7002", "/ci", "ci.ini") // message broker URL is ws://127.0.0.1:7000/ci
+	}
 }
