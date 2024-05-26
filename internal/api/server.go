@@ -106,7 +106,7 @@ func (s *ApiServer) StartEventListener() {
 		for {
 			select {
 			case event := <-s.getEventsChan():
-				eventMsg := Message{0, "msg", "evn", "", "", make(map[string]string)}
+				eventMsg := Message{0, "msg", "evn", "", "", make(map[string]string), nil}
 				eventMsg.Data = map[string]string{"status": event}
 				s.SendEvent(eventMsg)
 				fmt.Println("event: ", eventMsg)
@@ -171,6 +171,9 @@ func (s *ApiServer) Listen() {
 
 					fmt.Println("\nReadable Configuration:")
 					fmt.Println(readableConf)
+
+					response = request
+					response.Conf = s.strmConf
 				}
 			case "add/pipe":
 				{

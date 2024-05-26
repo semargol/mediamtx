@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"github.com/bluenviron/mediamtx/internal/conf"
 	"strings"
 )
 
@@ -12,6 +13,7 @@ type Message struct {
 	Verb  string            // add, set, get, del
 	Noun  string            // pipe, rtp, rtsp
 	Data  map[string]string // port=7777, mode=on|off
+	Conf  *conf.StrmConf
 }
 
 func NewMessage(text string) Message {

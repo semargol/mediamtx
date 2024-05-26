@@ -37,7 +37,7 @@ func errorf(format string, a ...interface{}) error {
 }
 
 func getError(req *Message, errorCode int) (Message, int) {
-	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 	response.Data["result"] = strconv.Itoa(errorCode)
 	response.Data["errorMsg"] = getErrorDescription(errorCode, true)
 	return response, errorCode
@@ -191,7 +191,7 @@ func DeletePipeByID(t *ApiServer, id int) error {
 }
 
 func ApiUpdatePipeConfig(api *ApiServer, req *Message, configType string) (Message, int) {
-	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 	// Extracting pipe ID from the request
 	id, err := ExtractID(req)
 	if err != nil {
@@ -255,7 +255,7 @@ func ApiUpdatePipeConfig(api *ApiServer, req *Message, configType string) (Messa
 }
 
 func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
-	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 	// Use ExtractID to get the ID from the message
 	id, err := ExtractID(req)
 	if err != nil {
@@ -301,7 +301,7 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
 
 func ApiAddRtp(api *API, req *Message) (Message, error) {
 	id := req.Data["id"]
-	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 	response.Data["result"] = "OK"
 	response.Data["id"] = id
 	return response, nil
@@ -309,14 +309,14 @@ func ApiAddRtp(api *API, req *Message) (Message, error) {
 
 func ApiAddRtsp(api *API, req *Message) (Message, error) {
 	id := req.Data["id"]
-	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 	response.Data["result"] = "OK"
 	response.Data["id"] = id
 	return response, nil
 }
 
 func ApiDelPipe(api *ApiServer, req *Message) (Message, int) {
-	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 	id, _ := ExtractID(req)
 	err := DeletePipeByID(api, id)
 	if err != nil {
@@ -331,7 +331,7 @@ func ApiDelPipe(api *ApiServer, req *Message) (Message, int) {
 
 func ApiDelRtp(api *API, req *Message) (Message, error) {
 	id := req.Data["id"]
-	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 	response.Data["result"] = "OK"
 	response.Data["id"] = id
 	return response, nil
@@ -339,7 +339,7 @@ func ApiDelRtp(api *API, req *Message) (Message, error) {
 
 func ApiDelRtsp(api *API, req *Message) (Message, error) {
 	id := req.Data["id"]
-	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 	response.Data["result"] = "OK"
 	response.Data["id"] = id
 	return response, nil
@@ -347,7 +347,7 @@ func ApiDelRtsp(api *API, req *Message) (Message, error) {
 
 // ApiSetPipe updates a specific field in the PipeConfig for a given Pipe ID from Message, case-insensitively
 func ApiSetPipe(t *ApiServer, req *Message) (Message, int) {
-	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 	// Extracting pipe ID from the request
 	id, err := ExtractID(req)
 	if err != nil {
@@ -406,7 +406,7 @@ func ApiSetPipe(t *ApiServer, req *Message) (Message, int) {
 // }
 
 func ApiSetRtsp(api *ApiServer, req *Message) (Message, int) {
-	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 	rtsp := api.strmConf.RTSP
 	// Retrieving the PipeConfig
 
@@ -445,7 +445,7 @@ func ApiSetRtsp(api *ApiServer, req *Message) (Message, int) {
 
 // ApiGetPipe retrieves the values of specified fields from a PipeConfig in api.strmConf.Pipes by ID.
 func ApiGetPipe(api *ApiServer, req *Message) (Message, int) {
-	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 	// Extract the pipe ID from the request
 	id, err := ExtractID(req)
 	if err != nil {
@@ -501,7 +501,7 @@ func ApiGetPipe(api *ApiServer, req *Message) (Message, int) {
 }
 
 func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Message, int) {
-	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 	id, err := ExtractID(req)
 	if err != nil {
 		return getError(req, 100)
@@ -561,7 +561,7 @@ func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Mess
 
 func ApiGetRtsp(api *ApiServer, req *Message) (Message, int) {
 	rtsp := api.strmConf.RTSP
-	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string)}
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 
 	// Iterate over each data key in the request (these are field names)
 	v := reflect.ValueOf(&rtsp).Elem()

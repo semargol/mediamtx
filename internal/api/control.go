@@ -115,8 +115,8 @@ func RunControl(addr string, path string) {
 	//var pub Message = Message{0, "pub", "req", "", "", make(map[string]string)}
 	//_ = connection.WriteMessage(websocket.TextMessage, []byte(pub.String()))
 
-	fromConsole <- &Message{0, "sub", "res", "sub", "", make(map[string]string)}
-	fromConsole <- &Message{0, "pub", "req", "pub", "", make(map[string]string)}
+	fromConsole <- &Message{0, "sub", "res", "sub", "", make(map[string]string), nil}
+	fromConsole <- &Message{0, "pub", "req", "pub", "", make(map[string]string), nil}
 
 	for {
 		select {
