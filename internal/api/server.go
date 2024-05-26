@@ -113,6 +113,7 @@ func (s *ApiServer) StartEventListener() {
 			case <-s.ctx.Done():
 				return
 			default:
+				time.Sleep(100 * time.Millisecond)
 				break
 			}
 		}
