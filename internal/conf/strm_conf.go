@@ -20,7 +20,7 @@ type PipeConfig struct {
 	ID     int
 	Name   string
 	Source string
-	Syncs  []string
+	Sincs  []string
 	State  string
 	RTPR   RTPRConf
 	RTPS   RTPSConf
@@ -59,7 +59,7 @@ func InitializeDefaultStrmConf() StrmConf {
 					RTPR: RTPRConf{VideoURL: "rtp://127.0.0.1:5000",
 						AudioURL:   "rtp://127.0.0.1:5002",
 						RunOnReady: "ffmpeg -re -stream_loop -1 -i videos/ts1920x1080h264.mp4 -an -c:v libx264 -f rtp rtp://127.0.0.1:5000 -vn -c:a copy -f  rtp rtp://127.0.0.1:5002",
-						VideoCodec: "h264"}, Syncs: []string{"sync1"},
+						VideoCodec: "h264"}, Sincs: []string{"sync1"},
 					State: "active"},
 				2: {ID: 2,
 					Name:   "pipe2",
@@ -67,7 +67,7 @@ func InitializeDefaultStrmConf() StrmConf {
 					RTPR: RTPRConf{VideoURL: "rtp://127.0.0.1:5010",
 						AudioURL:   "rtp://127.0.0.1:5012",
 						RunOnReady: "ffmpeg -re -stream_loop -1 -i videos/ts1920x1080h264.mp4 -an -c:v libx264 -f rtp rtp://127.0.0.1:5000 -vn -c:a copy -f  rtp rtp://127.0.0.1:5002",
-						VideoCodec: "h264"}, Syncs: []string{"sync1"},
+						VideoCodec: "h264"}, Sincs: []string{"sync1"},
 					State: "active"},
 				3: {ID: 3,
 					Name:   "pipe3",
@@ -75,7 +75,7 @@ func InitializeDefaultStrmConf() StrmConf {
 					RTPR: RTPRConf{VideoURL: "rtp://127.0.0.1:5020",
 						AudioURL:   "rtp://127.0.0.1:5022",
 						RunOnReady: "ffmpeg -re -stream_loop -1 -i videos/ts1920x1080h264.mp4 -an -c:v libx264 -f rtp rtp://127.0.0.1:5000 -vn -c:a copy -f  rtp rtp://127.0.0.1:5002",
-						VideoCodec: "h264"}, Syncs: []string{"sync1"},
+						VideoCodec: "h264"}, Sincs: []string{"sync1"},
 					State: "active"},
 				4: {ID: 4,
 					Name:   "pipe4",
@@ -83,7 +83,7 @@ func InitializeDefaultStrmConf() StrmConf {
 					RTPR: RTPRConf{VideoURL: "rtp://127.0.0.1:5030",
 						AudioURL:   "rtp://127.0.0.1:50312",
 						RunOnReady: "ffmpeg -re -stream_loodel p -1 -i videos/ts1920x1080h264.mp4 -an -c:v libx264 -f rtp rtp://127.0.0.1:5000 -vn -c:a copy -f  rtp rtp://127.0.0.1:5002",
-						VideoCodec: "h264"}, Syncs: []string{"sync1"},
+						VideoCodec: "h264"}, Sincs: []string{"sync1"},
 					State: "active"},
 			},
 			RTSP:   ServerConfig{Port: 8888, State: "active"},
