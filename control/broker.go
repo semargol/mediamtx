@@ -4,33 +4,31 @@ import (
 	"encoding/json"
 	"github.com/bluenviron/mediamtx/internal/api"
 	"github.com/gorilla/websocket"
-	"html/template"
 	"log"
-	"net"
 	"net/http"
 	"time"
 )
 
-var fromServer = make(chan *api.Message, 10)
+// var fromServer = make(chan *api.Message, 10)
 var fromControl = make(chan *api.Message, 10)
 
-var serverAddr net.UDPAddr
-var serverConnection api.Transceiver
+//var serverAddr net.UDPAddr
+
+// var serverConnection api.Transceiver
 var controlConnection *websocket.Conn = nil
 var topicList TopicList
 var inputJson bool = false
 
 func init() {
-	serverAddrRef, _ := net.ResolveUDPAddr("udp", "127.0.0.1:7001")
-	serverAddr = *serverAddrRef
+	//serverAddrRef, _ := net.ResolveUDPAddr("udp", "127.0.0.1:7001")
+	//serverAddr = *serverAddrRef
 	topicList.TopicMap = make(map[string]*Topic)
 }
 
-func OpenControlConnection() {
+func ListenControlConnections() {
 	http.HandleFunc("/cihtml", strmhtml)
 	http.HandleFunc("/ci", strm)
 	http.HandleFunc("/", home)
-	//http.HandleFunc("/", home)
 	err := http.ListenAndServe(":7002", nil)
 	if err != nil {
 		panic(err)
@@ -38,10 +36,6 @@ func OpenControlConnection() {
 }
 
 var controlBrokerUpgrader = websocket.Upgrader{} // use default options
-
-func __home(w http.ResponseWriter, r *http.Request) {
-	__homeTemplate.Execute(w, "ws://"+r.Host+"/ci")
-}
 
 func strm(w http.ResponseWriter, r *http.Request) {
 	if controlConnection != nil {
@@ -66,18 +60,19 @@ func strm(w http.ResponseWriter, r *http.Request) {
 	RunControlReader()
 }
 
-func OpenServerConnection() {
-	serverConnection.Open(":7000")
-}
+/*
+	func OpenServerConnection() {
+		//serverConnection.Open(":7000")
+	}
 
-func CloseControlConnection() {
-	//
-}
+	func CloseControlConnection() {
+		//
+	}
 
-func CloseServerConnection() {
-	//serverConnection.close()
-}
-
+	func CloseServerConnection() {
+		//serverConnection.close()
+	}
+*/
 func RunControlReader() {
 	//var msg Message
 	for {
@@ -111,21 +106,24 @@ func RunControlReader() {
 	}
 }
 
+/*
 func RunServerReader() {
-	log.Println("Start api broker at ", serverConnection.EndPoint.String())
+	log.Println("Start api broker")
 	//var msg Message
-	var from *net.UDPAddr
-	var err error
+	//var from *net.UDPAddr
+	//var err error
 	for {
-		var msg *api.Message = new(api.Message)
-		*msg, from, err = serverConnection.ReceiveFrom(10)
-		if err == nil {
-			serverAddr = *from
+		//var msg *api.Message = new(api.Message)
+		//*msg, from, err = serverConnection.ReceiveFrom(10)
+		//msg := <- api.FromServerToBroker
+		//if err == nil {
+			//serverAddr = *from
 			//log.Println("BROK BrokerServerReader: ", from, " ", msg) //%s, type: %d", message, mt)
-			fromServer <- msg
-		}
+			//fromServer <- msg
+		//}
 	}
 }
+*/
 
 func pushMessage(msg *api.Message, from string) {
 	switch msg.Name {
@@ -139,14 +137,16 @@ func pushMessage(msg *api.Message, from string) {
 	case "msg":
 		topic, ok := topicList.TopicMap[msg.Topic]
 		if ok {
-			data, _ := json.Marshal(msg)
 			for _, addr := range topic.SubscriberList {
 				if addr != from {
 					if addr == "server" {
-						_, _ = serverConnection.UdpConn.WriteToUDP(data, &serverAddr)
+						api.FromBrokerToServer <- msg
+						//_, _ = serverConnection.UdpConn.WriteToUDP(data, &serverAddr)
 					}
 					if addr == "control" && inputJson == true {
+						data, _ := json.Marshal(msg)
 						_ = controlConnection.WriteMessage(websocket.TextMessage, data)
+						//log.Println("BROK SendToControl: ", msg) //%s, type: %d", message, mt)
 					}
 					if addr == "control" && inputJson == false {
 						response(msg)
@@ -160,13 +160,10 @@ func pushMessage(msg *api.Message, from string) {
 }
 
 func RunBroker() {
-	OpenServerConnection()
-	go OpenControlConnection()
-	go RunServerReader()
-	//go RunControlReader()
+	go ListenControlConnections()
 	for {
 		select {
-		case msg := <-fromServer:
+		case msg := <-api.FromServerToBroker:
 			//log.Println("BROK ReadFromServer:  ", msg)
 			pushMessage(msg, "server")
 		case msg := <-fromControl:
@@ -187,178 +184,4 @@ func RunBroker() {
 			}
 		}
 	}
-	CloseControlConnection()
-	CloseServerConnection()
 }
-
-var __homeTemplate = template.Must(template.New("").Parse(`
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<script>  
-window.addEventListener("load", function(evt) {
-
-    var output = document.getElementById("output");
-    var input = document.getElementById("input");
-    var ws;
-
-    var print = function(message) {
-        var d = document.createElement("div");
-        d.textContent = message;
-        output.appendChild(d);
-        output.scroll(0, output.scrollHeight);
-    };
-
-    document.getElementById("open").onclick = function(evt) {
-        if (ws) {
-            return false;
-        }
-        ws = new WebSocket("{{.}}");
-        ws.onopen = function(evt) {
-            print("OPEN");
-        }
-        ws.onclose = function(evt) {
-            print("CLOSE");
-            ws = null;
-        }
-        ws.onmessage = function(evt) {
-            print("RESPONSE: " + evt.data);
-        }
-        ws.onerror = function(evt) {
-            print("ERROR: " + evt.data);
-        }
-        return false;
-    };
-
-    document.getElementById("send").onclick = function(evt) {
-        if (!ws) {
-            return false;
-        }
-        print("SEND: " + input.value);
-        ws.send(input.value);
-        return false;
-    };
-
-    document.getElementById("close").onclick = function(evt) {
-        if (!ws) {
-            return false;
-        }
-        ws.close();
-        return false;
-    };
-
-});
-</script>
-</head>
-<body>
-<table>
-<tr><td valign="top" width="50%">
-<p>Click "Open" to create a connection to the server, 
-"Send" to send a message to the server and "Close" to close the connection. 
-You can change the message and send multiple times.
-<p>
-<form>
-<button id="open">Open</button>
-<button id="close">Close</button>
-<p><input id="input" type="text" value="Hello world!">
-<button id="send">Send</button>
-</form>
-</td><td valign="top" width="50%">
-<div id="output" style="max-height: 70vh;overflow-y: scroll;"></div>
-</td></tr></table>
-</body>
-</html>
-`))
-
-/*
-type ApiServerBroker struct {
-	transceiver
-	topicList TopicList
-}
-
-var serverBroker *ApiServerBroker = nil
-
-func CreateServerBrokerAndListen(bep string) {
-	serverBroker = NewApiBroker(bep)
-	serverBroker.Listen()
-}
-
-func NewApiBroker(ep string) *ApiServerBroker {
-	http.HandleFunc("/strm", strm)
-	http.HandleFunc("/", home)
-	err := http.ListenAndServe(":7000", nil)
-	if err != nil {
-		panic(err)
-	}
-
-	var b *ApiServerBroker = new(ApiServerBroker)
-	b.transceiver.open(ep)
-	b.topicList = newTopicList()
-	return b
-}
-
-func (b *ApiServerBroker) Listen() {
-	fmt.Println("Start api broker at ", b.endPoint.String())
-	var msg Message
-	var from *net.UDPAddr
-	var err error
-	for {
-		msg, from, err = b.receiveFrom(10)
-		if err == nil {
-			b.topicList.push(msg, from, &b.transceiver)
-		}
-	}
-}
-
-type ApiControlBroker struct {
-	//transceiver
-	topicList TopicList
-}
-
-var controlBroker *ApiControlBroker = nil
-
-func CreateControlBrokerAndListen(bep string) {
-	serverBroker = NewApiBroker(bep)
-	serverBroker.Listen()
-}
-
-var controlBrokerUpgrader = websocket.Upgrader{} // use default options
-
-func strm(w http.ResponseWriter, r *http.Request) {
-	c, err := controlBrokerUpgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Print("controlBrokerUpgraderError:", err)
-		return
-	}
-	defer c.Close()
-
-	var msg Message
-	from, _ := net.ResolveUDPAddr("udp", ":12000")
-
-	for {
-		mt, buf, err := c.ReadMessage()
-		if err != nil || mt != websocket.TextMessage {
-			log.Println("controlBrokerReadError:", err)
-			break
-		}
-
-		err = json.Unmarshal(buf, &msg)
-		log.Printf("controlBrokerRead: ", msg) //%s, type: %d", message, mt)
-
-		serverBroker.topicList.push(msg, from, &serverBroker.transceiver)
-		//err = c.WriteMessage(mt, message)
-		//if err != nil {
-		//	log.Println("write err:", err)
-		//	break
-		//}
-
-		//log.Printf("send: %s, type: %d", "sdjhnfvviwerbg", 1)
-		//err = c.WriteMessage(1, []byte("sdjhnfvviwerbg"))
-		//if err != nil {
-		//	log.Println("write err:", err)
-		//	break
-		//}
-	}
-}
-*/

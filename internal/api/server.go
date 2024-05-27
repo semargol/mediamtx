@@ -2,14 +2,17 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
-	"net"
 	"sync"
 	"time"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
 )
+
+var FromServerToBroker = make(chan *Message, 10)
+var FromBrokerToServer = make(chan *Message, 10)
 
 func CreateServerAndListen(sep string, bep string, api *API) {
 	var serverApp *ApiServer = NewApiServer(sep, bep, api)
@@ -24,13 +27,15 @@ func NewApiServer(serverEp string, brokerEp string, api *API) *ApiServer {
 
 	defaultStrmConf := conf.InitializeDefaultStrmConf()
 	s.strmConf = &defaultStrmConf
-	s.Transceiver.Open(serverEp)
-	addr, err := net.ResolveUDPAddr("udp", brokerEp)
-	if err != nil {
-		fmt.Println("Error resolving ApiServer UDP address:", err)
-		return nil
-	}
-	s.brokerAddr = addr
+	/*
+		s.Transceiver.Open(serverEp)
+		addr, err := net.ResolveUDPAddr("udp", brokerEp)
+		if err != nil {
+			fmt.Println("Error resolving ApiServer UDP address:", err)
+			return nil
+		}
+		s.brokerAddr = addr
+	*/
 	s.api = api
 
 	//ConfigSync(s)
@@ -53,8 +58,8 @@ type CiMessage struct {
 */
 
 type ApiServer struct {
-	Transceiver
-	brokerAddr *net.UDPAddr
+	//Transceiver
+	//brokerAddr *net.UDPAddr
 	api        *API
 	strmConf   *conf.StrmConf
 	eventsChan chan string
@@ -65,28 +70,50 @@ type ApiServer struct {
 }
 
 func (t *ApiServer) SendTo(msg Message) {
-	t.Transceiver.SendTo(msg, t.brokerAddr)
+	FromServerToBroker <- &msg
+	//t.Transceiver.SendTo(msg, t.brokerAddr)
 }
 
 //func (t *Server) SendToAll(msg Message, subscriberAddrList map[string]*net.UDPAddr) {
 //	t.transceiver.sendToAll(msg, subscriberAddrList)
 //}
 
-func (t *ApiServer) ReceiveFrom(msec int) (msg Message, fromAddr *net.UDPAddr, err error) {
-	msg, fromAddr, err = t.Transceiver.ReceiveFrom(msec)
-	return
+//func (t *ApiServer) ReceiveFrom(msec int) (msg Message, fromAddr *net.UDPAddr, err error) {
+//	msg = * <- FromBrokerToServer
+//	//msg, fromAddr, err = t.Transceiver.ReceiveFrom(msec)
+//	return msg, "control", nil
+//}
+
+func (t *ApiServer) Receive(msec int) (msg *Message, err error) {
+	select {
+	case msg = <-FromBrokerToServer:
+		return msg, nil
+	case <-time.After(time.Duration(msec) * time.Millisecond):
+		return nil, errors.New("timeout")
+	}
+	return nil, nil
+}
+
+//func (t *ApiServer) SubscribeAt(topic string) {
+//	t.Transceiver.SubscribeAt(topic, t.brokerAddr)
+//}
+
+//func (t *ApiServer) PublishAt(topic string) {
+//	t.Transceiver.PublishAt(topic, t.brokerAddr)
+//}
+
+func (t *ApiServer) SendEvent(event Message) {
+	t.SendTo(event)
 }
 
 func (t *ApiServer) SubscribeAt(topic string) {
-	t.Transceiver.SubscribeAt(topic, t.brokerAddr)
+	var sub Message = Message{0, "sub", topic, "", "", make(map[string]string), nil}
+	t.SendTo(sub)
 }
 
 func (t *ApiServer) PublishAt(topic string) {
-	t.Transceiver.PublishAt(topic, t.brokerAddr)
-}
-
-func (t *ApiServer) SendEvent(event Message) {
-	t.Transceiver.SendTo(event, t.brokerAddr)
+	var pub Message = Message{0, "pub", topic, "", "", make(map[string]string), nil}
+	t.SendTo(pub)
 }
 
 func (s *ApiServer) getEventsChan() chan string {
@@ -144,7 +171,7 @@ func (s *ApiServer) updateEventsChan() {
 }
 
 func (s *ApiServer) Listen() {
-	log.Println("Start api server at ", s.EndPoint.String(), " with broker at ", s.brokerAddr.String())
+	log.Println("Start api server")
 	s.PublishAt("evn")
 	s.PublishAt("res")
 	s.SubscribeAt("req")
@@ -153,10 +180,11 @@ func (s *ApiServer) Listen() {
 	s.updateEventsChan()
 	s.StartEventListener()
 	//var from *net.UDPAddr
-	var err error
+	//var err error
 	for {
-		request, _, err = s.ReceiveFrom(10)
+		reqmsg, err := s.Receive(10)
 		if err == nil {
+			request = *reqmsg
 			fmt.Println("request: ", request)
 			switch request.Verb + "/" + request.Noun {
 			case "get/config":

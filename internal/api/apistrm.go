@@ -38,5 +38,5 @@ func NewStreamApiServer(network string, address string, readTimeout time.Duratio
 }
 
 func (s *StreamApiServer) Close() {
-	_ = s.server.UdpConn.Close()
+	//_ = s.server.UdpConn.Close()
 }
