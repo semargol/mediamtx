@@ -1,21 +1,24 @@
-package api
+package control
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/bluenviron/mediamtx/internal/api"
 	"github.com/gorilla/websocket"
+	"html/template"
 	"log"
 	"net"
 	"net/http"
+	"time"
 )
 
-var fromServer = make(chan *Message, 10)
-var fromControl = make(chan *Message, 10)
+var fromServer = make(chan *api.Message, 10)
+var fromControl = make(chan *api.Message, 10)
 
 var serverAddr net.UDPAddr
-var serverConnection transceiver
+var serverConnection api.Transceiver
 var controlConnection *websocket.Conn = nil
 var topicList TopicList
+var inputJson bool = false
 
 func init() {
 	serverAddrRef, _ := net.ResolveUDPAddr("udp", "127.0.0.1:7001")
@@ -24,7 +27,9 @@ func init() {
 }
 
 func OpenControlConnection() {
+	http.HandleFunc("/cihtml", strmhtml)
 	http.HandleFunc("/ci", strm)
+	http.HandleFunc("/", home)
 	//http.HandleFunc("/", home)
 	err := http.ListenAndServe(":7002", nil)
 	if err != nil {
@@ -33,6 +38,10 @@ func OpenControlConnection() {
 }
 
 var controlBrokerUpgrader = websocket.Upgrader{} // use default options
+
+func __home(w http.ResponseWriter, r *http.Request) {
+	__homeTemplate.Execute(w, "ws://"+r.Host+"/ci")
+}
 
 func strm(w http.ResponseWriter, r *http.Request) {
 	if controlConnection != nil {
@@ -51,11 +60,14 @@ func strm(w http.ResponseWriter, r *http.Request) {
 		}
 		controlConnection = nil
 	}()
+	inputJson = true
+	topicList.publish("req", "control")
+	topicList.subscribe("res", "control")
 	RunControlReader()
 }
 
 func OpenServerConnection() {
-	serverConnection.open(":7000")
+	serverConnection.Open(":7000")
 }
 
 func CloseControlConnection() {
@@ -79,8 +91,20 @@ func RunControlReader() {
 
 		//msg.Parse(string(buf))
 		//txt := msg.String()
-		var msg *Message = new(Message)
-		err = json.Unmarshal(buf, msg)
+		var msg *api.Message = new(api.Message)
+		uerr := json.Unmarshal(buf, msg)
+		if uerr != nil {
+			msg.Parse(string(buf))
+			bytes, merr := json.Marshal(msg)
+			if merr != nil {
+				continue
+			}
+			uerr = json.Unmarshal(bytes, msg)
+			if uerr != nil {
+				continue
+			}
+			msg.Topic = "req"
+		}
 		//fmt.Println("BROK BrokerControlReader: ", msg) //%s, type: %d", message, mt)
 		fromControl <- msg
 		//serverBroker.topicList.push(msg, from, &serverBroker.transceiver)
@@ -88,13 +112,13 @@ func RunControlReader() {
 }
 
 func RunServerReader() {
-	fmt.Println("Start api broker at ", serverConnection.endPoint.String())
+	log.Println("Start api broker at ", serverConnection.EndPoint.String())
 	//var msg Message
 	var from *net.UDPAddr
 	var err error
 	for {
-		var msg *Message = new(Message)
-		*msg, from, err = serverConnection.receiveFrom(10)
+		var msg *api.Message = new(api.Message)
+		*msg, from, err = serverConnection.ReceiveFrom(10)
 		if err == nil {
 			serverAddr = *from
 			//log.Println("BROK BrokerServerReader: ", from, " ", msg) //%s, type: %d", message, mt)
@@ -103,7 +127,7 @@ func RunServerReader() {
 	}
 }
 
-func pushMessage(msg *Message, from string) {
+func pushMessage(msg *api.Message, from string) {
 	switch msg.Name {
 	case "pub":
 		topicList.publish(msg.Topic, from)
@@ -119,17 +143,20 @@ func pushMessage(msg *Message, from string) {
 			for _, addr := range topic.SubscriberList {
 				if addr != from {
 					if addr == "server" {
-						_, _ = serverConnection.udpConn.WriteToUDP(data, &serverAddr)
+						_, _ = serverConnection.UdpConn.WriteToUDP(data, &serverAddr)
 					}
-					if addr == "control" {
+					if addr == "control" && inputJson == true {
 						_ = controlConnection.WriteMessage(websocket.TextMessage, data)
+					}
+					if addr == "control" && inputJson == false {
+						response(msg)
+						//_ = controlConnection.WriteMessage(websocket.TextMessage, []byte(msg.String()))
 					}
 					//fmt.Println("send to ", addr, "msg", msg)
 				}
 			}
 		}
 	}
-
 }
 
 func RunBroker() {
@@ -151,11 +178,98 @@ func RunBroker() {
 		case <-done:
 			log.Println("BROK done")
 			return
+		case <-time.After(time.Second * 2):
+			if inputJson == false && controlConnection != nil {
+				msg := api.Message{0, "msg", "evn", "tic", "", make(map[string]string), nil}
+				msg.Data["result"] = "100"
+				msg.Data["description"] = "timer event occurs every 2000 msec"
+				event(&msg)
+			}
 		}
 	}
 	CloseControlConnection()
 	CloseServerConnection()
 }
+
+var __homeTemplate = template.Must(template.New("").Parse(`
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<script>  
+window.addEventListener("load", function(evt) {
+
+    var output = document.getElementById("output");
+    var input = document.getElementById("input");
+    var ws;
+
+    var print = function(message) {
+        var d = document.createElement("div");
+        d.textContent = message;
+        output.appendChild(d);
+        output.scroll(0, output.scrollHeight);
+    };
+
+    document.getElementById("open").onclick = function(evt) {
+        if (ws) {
+            return false;
+        }
+        ws = new WebSocket("{{.}}");
+        ws.onopen = function(evt) {
+            print("OPEN");
+        }
+        ws.onclose = function(evt) {
+            print("CLOSE");
+            ws = null;
+        }
+        ws.onmessage = function(evt) {
+            print("RESPONSE: " + evt.data);
+        }
+        ws.onerror = function(evt) {
+            print("ERROR: " + evt.data);
+        }
+        return false;
+    };
+
+    document.getElementById("send").onclick = function(evt) {
+        if (!ws) {
+            return false;
+        }
+        print("SEND: " + input.value);
+        ws.send(input.value);
+        return false;
+    };
+
+    document.getElementById("close").onclick = function(evt) {
+        if (!ws) {
+            return false;
+        }
+        ws.close();
+        return false;
+    };
+
+});
+</script>
+</head>
+<body>
+<table>
+<tr><td valign="top" width="50%">
+<p>Click "Open" to create a connection to the server, 
+"Send" to send a message to the server and "Close" to close the connection. 
+You can change the message and send multiple times.
+<p>
+<form>
+<button id="open">Open</button>
+<button id="close">Close</button>
+<p><input id="input" type="text" value="Hello world!">
+<button id="send">Send</button>
+</form>
+</td><td valign="top" width="50%">
+<div id="output" style="max-height: 70vh;overflow-y: scroll;"></div>
+</td></tr></table>
+</body>
+</html>
+`))
 
 /*
 type ApiServerBroker struct {

@@ -1,4 +1,4 @@
-package api
+package control
 
 type Topic struct {
 	Name           string

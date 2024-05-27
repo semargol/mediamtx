@@ -37,11 +37,12 @@ import (
 var version = "v0.0.0"
 
 var defaultConfPaths = []string{
-	"rtsp-simple-server.yml",
-	"mediamtx.yml",
-	"/usr/local/etc/mediamtx.yml",
-	"/usr/etc/mediamtx.yml",
-	"/etc/mediamtx/mediamtx.yml",
+	//"rtsp-simple-server.yml",
+	"strm.yml",
+	//"mediamtx.yml",
+	//"/usr/local/etc/mediamtx.yml",
+	//"/usr/etc/mediamtx.yml",
+	//"/etc/mediamtx/mediamtx.yml",
 }
 
 func gatherCleanerEntries(paths map[string]*conf.Path) []record.CleanerEntry {

@@ -24,7 +24,7 @@ func NewApiServer(serverEp string, brokerEp string, api *API) *ApiServer {
 
 	defaultStrmConf := conf.InitializeDefaultStrmConf()
 	s.strmConf = &defaultStrmConf
-	s.transceiver.open(serverEp)
+	s.Transceiver.Open(serverEp)
 	addr, err := net.ResolveUDPAddr("udp", brokerEp)
 	if err != nil {
 		fmt.Println("Error resolving ApiServer UDP address:", err)
@@ -53,7 +53,7 @@ type CiMessage struct {
 */
 
 type ApiServer struct {
-	transceiver
+	Transceiver
 	brokerAddr *net.UDPAddr
 	api        *API
 	strmConf   *conf.StrmConf
@@ -65,7 +65,7 @@ type ApiServer struct {
 }
 
 func (t *ApiServer) SendTo(msg Message) {
-	t.transceiver.sendTo(msg, t.brokerAddr)
+	t.Transceiver.SendTo(msg, t.brokerAddr)
 }
 
 //func (t *Server) SendToAll(msg Message, subscriberAddrList map[string]*net.UDPAddr) {
@@ -73,20 +73,20 @@ func (t *ApiServer) SendTo(msg Message) {
 //}
 
 func (t *ApiServer) ReceiveFrom(msec int) (msg Message, fromAddr *net.UDPAddr, err error) {
-	msg, fromAddr, err = t.transceiver.receiveFrom(msec)
+	msg, fromAddr, err = t.Transceiver.ReceiveFrom(msec)
 	return
 }
 
 func (t *ApiServer) SubscribeAt(topic string) {
-	t.transceiver.SubscribeAt(topic, t.brokerAddr)
+	t.Transceiver.SubscribeAt(topic, t.brokerAddr)
 }
 
 func (t *ApiServer) PublishAt(topic string) {
-	t.transceiver.PublishAt(topic, t.brokerAddr)
+	t.Transceiver.PublishAt(topic, t.brokerAddr)
 }
 
 func (t *ApiServer) SendEvent(event Message) {
-	t.transceiver.sendTo(event, t.brokerAddr)
+	t.Transceiver.SendTo(event, t.brokerAddr)
 }
 
 func (s *ApiServer) getEventsChan() chan string {
@@ -144,7 +144,7 @@ func (s *ApiServer) updateEventsChan() {
 }
 
 func (s *ApiServer) Listen() {
-	fmt.Println("Start api server at ", s.endPoint.String(), " with broker at ", s.brokerAddr.String())
+	log.Println("Start api server at ", s.EndPoint.String(), " with broker at ", s.brokerAddr.String())
 	s.PublishAt("evn")
 	s.PublishAt("res")
 	s.SubscribeAt("req")

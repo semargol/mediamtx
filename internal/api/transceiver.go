@@ -6,36 +6,36 @@ import (
 	"time"
 )
 
-type transceiver struct {
-	endPoint *net.UDPAddr
-	udpConn  *net.UDPConn
+type Transceiver struct {
+	EndPoint *net.UDPAddr
+	UdpConn  *net.UDPConn
 }
 
-func (t *transceiver) open(ep string) {
-	t.endPoint, _ = net.ResolveUDPAddr("udp", ep)
-	t.udpConn, _ = net.ListenUDP("udp", t.endPoint)
+func (t *Transceiver) Open(ep string) {
+	t.EndPoint, _ = net.ResolveUDPAddr("udp", ep)
+	t.UdpConn, _ = net.ListenUDP("udp", t.EndPoint)
 }
 
-func (t *transceiver) sendTo(msg Message, addr *net.UDPAddr) {
+func (t *Transceiver) SendTo(msg Message, addr *net.UDPAddr) {
 	//fmt.Println("send to ", addr, "msg", msg)
 	data, _ := json.Marshal(msg)
-	_, _ = t.udpConn.WriteToUDP(data, addr)
+	_, _ = t.UdpConn.WriteToUDP(data, addr)
 }
 
-func (t *transceiver) sendToAll(msg Message, subscriberList map[string]*net.UDPAddr) {
+func (t *Transceiver) SendToAll(msg Message, subscriberList map[string]*net.UDPAddr) {
 	data, _ := json.Marshal(msg)
 	for _, addr := range subscriberList {
 		//fmt.Println("send to ", addr, "msg", msg)
-		_, _ = t.udpConn.WriteToUDP(data, addr)
+		_, _ = t.UdpConn.WriteToUDP(data, addr)
 	}
 }
 
-func (t *transceiver) receiveFrom(msec int) (Message, *net.UDPAddr, error) {
+func (t *Transceiver) ReceiveFrom(msec int) (Message, *net.UDPAddr, error) {
 	var msg Message
 	buf := make([]byte, 1024)
 	deadline := time.Now().Add(time.Duration(msec) * time.Millisecond)
-	_ = t.udpConn.SetReadDeadline(deadline)
-	n, addr, err := t.udpConn.ReadFromUDP(buf)
+	_ = t.UdpConn.SetReadDeadline(deadline)
+	n, addr, err := t.UdpConn.ReadFromUDP(buf)
 	if err != nil {
 		return msg, addr, err
 	} else {
@@ -45,12 +45,12 @@ func (t *transceiver) receiveFrom(msec int) (Message, *net.UDPAddr, error) {
 	}
 }
 
-func (t *transceiver) SubscribeAt(topic string, at *net.UDPAddr) {
+func (t *Transceiver) SubscribeAt(topic string, at *net.UDPAddr) {
 	var sub Message = Message{0, "sub", topic, "", "", make(map[string]string), nil}
-	t.sendTo(sub, at)
+	t.SendTo(sub, at)
 }
 
-func (t *transceiver) PublishAt(topic string, at *net.UDPAddr) {
+func (t *Transceiver) PublishAt(topic string, at *net.UDPAddr) {
 	var pub Message = Message{0, "pub", topic, "", "", make(map[string]string), nil}
-	t.sendTo(pub, at)
+	t.SendTo(pub, at)
 }

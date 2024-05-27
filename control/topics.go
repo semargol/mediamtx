@@ -1,4 +1,4 @@
-package api
+package control
 
 type TopicList struct {
 	TopicMap map[string]*Topic

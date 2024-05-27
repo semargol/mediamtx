@@ -2,14 +2,14 @@
 package main
 
 import (
-	"github.com/bluenviron/mediamtx/internal/api"
+	"github.com/bluenviron/mediamtx/control"
 	"os"
 
 	"github.com/bluenviron/mediamtx/internal/core"
 )
 
 func main() {
-	go api.RunBroker()
+	go control.RunBroker()
 
 	s, ok := core.New(os.Args[1:])
 	if !ok {
