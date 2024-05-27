@@ -284,7 +284,7 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
 			VideoPT:    96,
 			AudioPT:    97,
 		},
-		Sincs: []string{"RTSP"},
+		Sink: []string{"RTSP"},
 	}
 	if t.strmConf.Pipes == nil {
 		t.strmConf.Pipes = make(map[int]conf.PipeConfig)
