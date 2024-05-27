@@ -98,13 +98,15 @@ func RunConsoleReader() {
 		text, _ := bufio.NewReader(os.Stdin).ReadString('\n')
 		text, _ = strings.CutSuffix(text, "\n")
 		text, _ = strings.CutSuffix(text, "\r")
-		msg := new(api.Message)
-		msg.Parse(text)
-		msg.Corr = cmdNumber
-		msg.Topic = "req"
-		//fmt.Println(msg) //%s, type: %d", message, mt)
-		fromConsole <- msg
-		time.Sleep(50 * time.Millisecond)
+		if len(text) > 0 {
+			msg := new(api.Message)
+			msg.Parse(text)
+			msg.Corr = cmdNumber
+			msg.Topic = "req"
+			//fmt.Println(msg) //%s, type: %d", message, mt)
+			fromConsole <- msg
+			time.Sleep(100 * time.Millisecond)
+		}
 	}
 }
 
