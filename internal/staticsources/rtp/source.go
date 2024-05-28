@@ -9,11 +9,14 @@ import (
 
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
 	"github.com/bluenviron/gortsplib/v4/pkg/format"
+
+	// "github.com/bluenviron/mediamtx/internal/formatprocessor/h265"
 	"github.com/bluenviron/gortsplib/v4/pkg/multicast"
 	"github.com/pion/rtp"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
+	"github.com/bluenviron/mediamtx/internal/formatprocessor"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/restrictnetwork"
 	"github.com/bluenviron/mediamtx/internal/stream"
@@ -130,7 +133,6 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 			Type: description.MediaTypeAudio,
 			Formats: []format.Format{&format.Opus{
 				PayloadTyp: uint8(s.AudioPT),
-				IsStereo:   true,
 			}},
 		}
 		medias = []*description.Media{videoMedi, audioMedi}
@@ -141,7 +143,7 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 	if stream == nil {
 		res := s.Parent.SetReady(defs.PathSourceStaticSetReadyReq{
 			Desc:               &description.Session{Medias: medias},
-			GenerateRTPPackets: false,
+			GenerateRTPPackets: true,
 		})
 		if res.Err != nil {
 			return res.Err
@@ -182,6 +184,7 @@ func (s *Source) runReaderVideo(pc net.PacketConn,
 	stream *stream.Stream,
 	medias []*description.Media, buf []byte) error {
 
+	p, _ := formatprocessor.New(udpKernelReadBufferSize, medias[0].Formats[0], false)
 	for {
 		n, _, err := pc.ReadFrom(buf)
 
@@ -193,9 +196,20 @@ func (s *Source) runReaderVideo(pc net.PacketConn,
 			fmt.Println("Failed to unmarshal RTP packet:", err)
 			continue
 		}
-		stream.WriteRTPPacket(medias[0],
+
+		un, err := p.ProcessRTPPacket(&pkt, time.Now(), time.Duration(0), false)
+		if err != nil {
+			fmt.Println("un: ", un)
+			fmt.Println("err: ", err)
+		}
+
+		stream.WriteUnit(medias[0],
 			medias[0].Formats[0],
-			&pkt, time.Now(), time.Duration(0))
+			un)
+
+		// stream.WriteRTPPacket(medias[0],
+		// 	medias[0].Formats[0],
+		// 	&pkt, time.Now(), time.Duration(0))
 	}
 }
 
@@ -203,6 +217,7 @@ func (s *Source) runReaderAudio(pc net.PacketConn,
 	stream *stream.Stream,
 	medias []*description.Media, buf []byte) error {
 
+	// p, _ := formatprocessor.New(udpKernelReadBufferSize, medias[1].Formats[0], true)
 	for {
 		n, _, err := pc.ReadFrom(buf)
 
@@ -214,6 +229,14 @@ func (s *Source) runReaderAudio(pc net.PacketConn,
 			fmt.Println("Failed to unmarshal RTP packet:", err)
 			continue
 		}
+		// un, err := p.ProcessRTPPacket(&pkt, time.Now(), time.Duration(0), false)
+		// if err != nil {
+		// 	fmt.Println("un: ", un)
+		// 	fmt.Println("err: ", err)
+		// }
+		// stream.WriteUnit(medias[1],
+		// 	medias[1].Formats[0],
+		// 	un)
 		stream.WriteRTPPacket(medias[1],
 			medias[1].Formats[0],
 			&pkt, time.Now(), time.Duration(0))
