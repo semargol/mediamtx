@@ -24,6 +24,7 @@ type PipeConfig struct {
 	State  string
 	RTPR   RTPRConf
 	RTPS   RTPSConf
+	RTSPCL RTSPCLConf
 	Type   string
 }
 
@@ -32,6 +33,10 @@ type RTPSConf struct {
 	AudioPort  int
 	Name       string
 	VideoCodec string
+}
+
+type RTSPCLConf struct {
+	Url string
 }
 
 type StrmConf struct {

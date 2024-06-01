@@ -144,6 +144,12 @@ func ConfigSync(t *ApiServer) {
 			//fmt.Println("AudioSource", pipeConfig.RTPR.AudioURL)
 			//newConf.Validate()
 			//fmt.Println("newConf AudioSource", newConf.Paths[pipeConfig.Name].AudioSource)
+		} else if pipeConfig.Source == "RTSPCL" &&
+			pipeConfig.RTSPCL.Url != "" &&
+			pipeConfig.State == "start" {
+			newConf.AddPath(pipeConfig.Name, nil)
+			newConf.Validate()
+			setField(newConf.OptionalPaths[pipeConfig.Name], "Source", pipeConfig.RTSPCL.Url)
 		}
 	}
 	newConf.Validate()
