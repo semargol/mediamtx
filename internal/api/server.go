@@ -250,11 +250,11 @@ func (s *ApiServer) Listen() {
 					response, _ = ApiGetSubConfigField(s, &request, "RTSPCL")
 					//fmt.Println("response: ", response)
 				}
-			case "set/rtsp":
+			case "set/rtspsrv":
 				{
 					response, _ = ApiSetRtsp(s, &request)
 				}
-			case "get/rtsp":
+			case "get/rtspsrv":
 				{
 					response, _ = ApiGetRtsp(s, &request)
 				}

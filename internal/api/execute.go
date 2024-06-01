@@ -118,7 +118,7 @@ func ConfigSync(t *ApiServer) {
 	newConf := t.api.Conf.Clone()
 	newConf.SetDefaults()
 	newConf.LogLevel = 4
-	rtspState := strings.ToLower(t.strmConf.RTSP.State)
+	rtspState := strings.ToLower(t.strmConf.RTSPSRV.State)
 	//fmt.Println("rtspState: ", rtspState)
 	switch rtspState {
 	case "start":
@@ -128,7 +128,7 @@ func ConfigSync(t *ApiServer) {
 		newConf.RTSP = false
 	}
 
-	newConf.RTSPAddress = t.strmConf.RTSP.Address
+	newConf.RTSPAddress = t.strmConf.RTSPSRV.Address
 	newConf.Paths = nil
 	newConf.OptionalPaths = nil
 	for _, pipeConfig := range t.strmConf.Pipes {
@@ -414,7 +414,7 @@ func ApiSetPipe(t *ApiServer, req *Message) (Message, int) {
 
 func ApiSetRtsp(api *ApiServer, req *Message) (Message, int) {
 	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
-	rtsp := api.strmConf.RTSP
+	rtsp := api.strmConf.RTSPSRV
 	// Retrieving the PipeConfig
 
 	// Using reflection to set field dynamically and case-insensitively
@@ -444,7 +444,7 @@ func ApiSetRtsp(api *ApiServer, req *Message) (Message, int) {
 		}
 	}
 	// Save back the modified PipeConfig
-	api.strmConf.RTSP = rtsp
+	api.strmConf.RTSPSRV = rtsp
 	ConfigSync(api)
 	response.Data = map[string]string{"status": "rtsp updated successfully"}
 	return response, 0
@@ -567,7 +567,7 @@ func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Mess
 }
 
 func ApiGetRtsp(api *ApiServer, req *Message) (Message, int) {
-	rtsp := api.strmConf.RTSP
+	rtsp := api.strmConf.RTSPSRV
 	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 
 	// Iterate over each data key in the request (these are field names)

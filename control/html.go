@@ -2,12 +2,13 @@ package control
 
 import (
 	"fmt"
-	"github.com/bluenviron/mediamtx/internal/api"
-	"github.com/gorilla/websocket"
 	"html/template"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/bluenviron/mediamtx/internal/api"
+	"github.com/gorilla/websocket"
 )
 
 func RunHtmlReader() {
@@ -119,7 +120,7 @@ func response_or_event(msg *api.Message) {
 	}
 	c := msg.Conf
 	if c != nil {
-		rs := fmt.Sprintf("     RTSPSRV:  addr=%s state=%s\n", c.RTSP.Address, c.RTSP.State)
+		rs := fmt.Sprintf("     RTSPSRV:  addr=%s state=%s\n", c.RTSPSRV.Address, c.RTSPSRV.State)
 		_ = controlConnection.WriteMessage(websocket.TextMessage, []byte(rs))
 		for _, p := range c.Pipes {
 			r := p.RTPR
