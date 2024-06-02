@@ -9,6 +9,7 @@ import (
 
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
 	"github.com/bluenviron/gortsplib/v4/pkg/format"
+	"github.com/bluenviron/gortsplib/v4/pkg/rtptime"
 
 	// "github.com/bluenviron/mediamtx/internal/formatprocessor/h265"
 	"github.com/bluenviron/gortsplib/v4/pkg/multicast"
@@ -173,9 +174,11 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 		return err
 	case <-params.Context.Done():
 		pcVideo.Close()
-		pcAudio.Close()
+		if pcAudio != nil {
+			pcAudio.Close()
+		}
 		<-readerErrVideo
-		<-readerErrAudio
+		// <-readerErrAudio
 		return fmt.Errorf("terminated")
 	}
 }
@@ -183,7 +186,8 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 func (s *Source) runReaderVideo(pc net.PacketConn,
 	stream *stream.Stream,
 	medias []*description.Media, buf []byte) error {
-
+	// trackWrapper := &webrtc.TrackWrapper{ClockRat: medias[0].Formats[0].ClockRate()}
+	timeDecoder := rtptime.NewGlobalDecoder()
 	p, _ := formatprocessor.New(udpKernelReadBufferSize, medias[0].Formats[0], false)
 	for {
 		n, _, err := pc.ReadFrom(buf)
@@ -196,8 +200,13 @@ func (s *Source) runReaderVideo(pc net.PacketConn,
 			fmt.Println("Failed to unmarshal RTP packet:", err)
 			continue
 		}
+		pts, ok := timeDecoder.Decode(medias[0].Formats[0], &pkt)
+		if !ok {
+			fmt.Print(pts)
+			continue
+		}
 
-		un, err := p.ProcessRTPPacket(&pkt, time.Now(), time.Duration(0), false)
+		un, err := p.ProcessRTPPacket(&pkt, time.Now(), pts, false)
 		if err != nil {
 			fmt.Println("un: ", un)
 			fmt.Println("err: ", err)
