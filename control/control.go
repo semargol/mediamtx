@@ -99,13 +99,17 @@ func RunConsoleReader() {
 		text, _ = strings.CutSuffix(text, "\n")
 		text, _ = strings.CutSuffix(text, "\r")
 		if len(text) > 0 {
-			msg := new(api.Message)
-			msg.Parse(text)
-			msg.Corr = cmdNumber
-			msg.Topic = "req"
-			//fmt.Println(msg) //%s, type: %d", message, mt)
-			fromConsole <- msg
-			time.Sleep(100 * time.Millisecond)
+			if text[0] == '@' {
+				InitControl(text[1:])
+			} else {
+				msg := new(api.Message)
+				msg.Parse(text)
+				msg.Corr = cmdNumber
+				msg.Topic = "req"
+				//fmt.Println(msg) //%s, type: %d", message, mt)
+				fromConsole <- msg
+				time.Sleep(100 * time.Millisecond)
+			}
 		}
 	}
 }
