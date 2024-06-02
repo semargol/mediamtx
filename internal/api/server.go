@@ -239,20 +239,22 @@ func (s *ApiServer) Listen() {
 					response, _ = ApiGetSubConfigField(s, &request, "RTPR")
 					//fmt.Println("response: ", response)
 				}
-
-			// case "add/rtsp":
-			// 	{
-			// 		response, _ = ApiAddRtsp(s.api, &request)
-			// 	}
-			// case "del/rtsp":
-			// 	{
-			// 		response, _ = ApiDelRtsp(s.api, &request)
-			// 	}
-			case "set/rtsp":
+			case "set/rtspcl":
+				{
+					// response, _ = ApiSetRtp(s.api, &request)
+					response, _ = ApiUpdatePipeConfig(s, &request, "RTSPCL")
+				}
+			case "get/rtspcl":
+				{
+					// response, _ = ApiGetRtp(s.api, &request)
+					response, _ = ApiGetSubConfigField(s, &request, "RTSPCL")
+					//fmt.Println("response: ", response)
+				}
+			case "set/rtspsrv":
 				{
 					response, _ = ApiSetRtsp(s, &request)
 				}
-			case "get/rtsp":
+			case "get/rtspsrv":
 				{
 					response, _ = ApiGetRtsp(s, &request)
 				}

@@ -24,6 +24,7 @@ type PipeConfig struct {
 	State  string
 	RTPR   RTPRConf
 	RTPS   RTPSConf
+	RTSPCL RTSPCLConf
 	Type   string
 }
 
@@ -34,10 +35,14 @@ type RTPSConf struct {
 	VideoCodec string
 }
 
+type RTSPCLConf struct {
+	Url string
+}
+
 type StrmConf struct {
-	Pipes  map[int]PipeConfig
-	RTSP   ServerConfig
-	WebRTC ServerConfig
+	Pipes   map[int]PipeConfig
+	RTSPSRV ServerConfig
+	WebRTC  ServerConfig
 }
 
 type ServerConfig struct {
@@ -47,7 +52,7 @@ type ServerConfig struct {
 
 func InitializeDefaultStrmConf() StrmConf {
 	return StrmConf{
-		RTSP: ServerConfig{
+		RTSPSRV: ServerConfig{
 			Address: ":8554",
 			State:   "stop",
 		},

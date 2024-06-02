@@ -4,15 +4,16 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/bluenviron/mediamtx/internal/api"
-	"github.com/bluenviron/mediamtx/internal/conf"
-	"github.com/gorilla/websocket"
 	"io"
 	"log"
 	"net/url"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/bluenviron/mediamtx/internal/api"
+	"github.com/bluenviron/mediamtx/internal/conf"
+	"github.com/gorilla/websocket"
 )
 
 var cmdNumber int = 1000
@@ -127,7 +128,7 @@ func ConsoleReader(init string) {
 
 func PrintConfig(c *conf.StrmConf) {
 	if c != nil {
-		fmt.Printf("     RTSPSRV:  addr=%s state=%s\n", c.RTSP.Address, c.RTSP.State)
+		fmt.Printf("     RTSPSRV:  addr=%s state=%s\n", c.RTSPSRV.Address, c.RTSPSRV.State)
 		for _, p := range c.Pipes {
 			r := p.RTPR
 			fmt.Printf("     PIPE:     id=%d name=%s type=%s state=%s source=%s\n", p.ID, p.Name, p.Type, p.State, p.Source)
