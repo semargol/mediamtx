@@ -202,13 +202,11 @@ func (s *Source) runReaderVideo(pc net.PacketConn,
 		}
 		pts, ok := timeDecoder.Decode(medias[0].Formats[0], &pkt)
 		if !ok {
-			fmt.Print(pts)
 			continue
 		}
 
 		un, err := p.ProcessRTPPacket(&pkt, time.Now(), pts, false)
 		if err != nil {
-			fmt.Println("un: ", un)
 			fmt.Println("err: ", err)
 		}
 
