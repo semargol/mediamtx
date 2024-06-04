@@ -2,6 +2,8 @@
 package rtsp
 
 import (
+	"net"
+	"strconv"
 	"time"
 
 	"github.com/bluenviron/gortsplib/v4"
@@ -67,6 +69,12 @@ type Source struct {
 	WriteTimeout   conf.StringDuration
 	WriteQueueSize int
 	Parent         defs.StaticSourceParent
+
+	rtpVideo *net.UDPConn
+	rtpAudio *net.UDPConn
+
+	rtpVideoAddr *net.UDPAddr
+	rtpAudioAddr *net.UDPAddr
 }
 
 // Log implements logger.Writer.
@@ -74,11 +82,29 @@ func (s *Source) Log(level logger.Level, format string, args ...interface{}) {
 	s.Parent.Log(level, "[RTSP source] "+format, args...)
 }
 
+func (c *Source) send(pkt *rtp.Packet) {
+	//fmt.Println("send to ", addr, "msg", msg)
+	data, _ := pkt.Marshal()
+	if pkt.PayloadType == 96 {
+		_, _ = c.rtpVideo.WriteToUDP(data, c.rtpVideoAddr)
+	} else if pkt.PayloadType == 97 {
+		_, _ = c.rtpAudio.WriteToUDP(data, c.rtpAudioAddr)
+	}
+}
+
 // Run implements StaticSource.
 func (s *Source) Run(params defs.StaticSourceRunParams) error {
 	s.Log(logger.Debug, "connecting")
 
 	decodeErrLogger := logger.NewLimitedLogger(s)
+
+	rconf := conf.LookupRTPSbyURL(s.ResolvedSource)
+	if rconf != nil {
+		s.rtpVideoAddr, _ = net.ResolveUDPAddr("udp", "127.0.0.1:"+strconv.Itoa(rconf.VideoPort))
+		s.rtpAudioAddr, _ = net.ResolveUDPAddr("udp", "127.0.0.1:"+strconv.Itoa(rconf.AudioPort))
+		s.rtpVideo, _ = net.ListenUDP("udp", nil)
+		s.rtpAudio, _ = net.ListenUDP("udp", nil)
+	}
 
 	c := &gortsplib.Client{
 		Transport:      params.Conf.RTSPTransport.Transport,
@@ -116,6 +142,7 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 	defer c.Close()
 
 	readErr := make(chan error)
+
 	go func() {
 		readErr <- func() error {
 			desc, _, err := c.Describe(u)
@@ -149,7 +176,12 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 							return
 						}
 
-						res.Stream.WriteRTPPacket(cmedi, cforma, pkt, time.Now(), pts)
+						if s.rtpVideo == nil && s.rtpAudio == nil {
+							res.Stream.WriteRTPPacket(cmedi, cforma, pkt, time.Now(), pts)
+						} else {
+							s.send(pkt)
+						}
+
 					})
 				}
 			}
@@ -177,6 +209,12 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 
 		case <-params.Context.Done():
 			c.Close()
+			if s.rtpVideo != nil {
+				_ = s.rtpVideo.Close()
+			}
+			if s.rtpAudio != nil {
+				_ = s.rtpAudio.Close()
+			}
 			<-readErr
 			return nil
 		}
