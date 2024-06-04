@@ -27,7 +27,9 @@ func (msg *Message) Parse(text string) {
 	var noun string
 	var pair map[string]string = make(map[string]string)
 	for {
-		if strings.Contains(text, " =") {
+		if strings.Contains(text, "  ") {
+			text = strings.Replace(text, "  ", " ", -1)
+		} else if strings.Contains(text, " =") {
 			text = strings.Replace(text, " =", "=", -1)
 		} else if strings.Contains(text, "= ") {
 			text = strings.Replace(text, "= ", "=", -1)
