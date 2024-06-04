@@ -133,12 +133,14 @@ func ConfigSync(t *ApiServer) {
 	newConf.OptionalPaths = nil
 	for _, pipeConfig := range t.strmConf.Pipes {
 		if pipeConfig.Source == "RTPR" &&
-			pipeConfig.RTPR.VideoURL != "" &&
+			pipeConfig.RTPR.VideoPort != 0 &&
 			pipeConfig.State == "start" {
 			newConf.AddPath(pipeConfig.Name, nil)
 			newConf.Validate()
-			setField(newConf.OptionalPaths[pipeConfig.Name], "Source", pipeConfig.RTPR.VideoURL)
-			setField(newConf.OptionalPaths[pipeConfig.Name], "AudioSource", pipeConfig.RTPR.AudioURL)
+			videoSource := fmt.Sprintf("rtp://127.0.0.1:%d", pipeConfig.RTPR.VideoPort)
+			audioSource := fmt.Sprintf("rtp://127.0.0.1:%d", pipeConfig.RTPR.AudioPort)
+			setField(newConf.OptionalPaths[pipeConfig.Name], "Source", videoSource)
+			setField(newConf.OptionalPaths[pipeConfig.Name], "AudioSource", audioSource)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "VideoCodec", pipeConfig.RTPR.VideoCodec)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "VideoPT", pipeConfig.RTPR.VideoPT)
 			//fmt.Println("AudioSource", pipeConfig.RTPR.AudioURL)
@@ -282,9 +284,9 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
 		State:  "stop", // Example default state
 		Type:   "sending",
 		Source: "RTPR",
-		RTPR: conf.RTPRConf{VideoURL: "",
+		RTPR: conf.RTPRConf{VideoPort: 0,
 			Name:       "RTPR",
-			AudioURL:   "",
+			AudioPort:  0,
 			VideoCodec: "h264",
 			AudioCodec: "opus",
 			VideoPT:    96,

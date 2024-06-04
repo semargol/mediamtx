@@ -3,7 +3,6 @@ package rtsp
 
 import (
 	"net"
-	"strconv"
 	"time"
 
 	"github.com/bluenviron/gortsplib/v4"
@@ -100,8 +99,10 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 
 	rconf := conf.LookupRTPSbyURL(s.ResolvedSource)
 	if rconf != nil {
-		s.rtpVideoAddr, _ = net.ResolveUDPAddr("udp", "127.0.0.1:"+strconv.Itoa(rconf.VideoPort))
-		s.rtpAudioAddr, _ = net.ResolveUDPAddr("udp", "127.0.0.1:"+strconv.Itoa(rconf.AudioPort))
+		adress := rconf.VideoURL[len("udp://"):]
+		s.rtpVideoAddr, _ = net.ResolveUDPAddr("udp", adress)
+		adress = rconf.AudioURL[len("udp://"):]
+		s.rtpAudioAddr, _ = net.ResolveUDPAddr("udp", adress)
 		s.rtpVideo, _ = net.ListenUDP("udp", nil)
 		s.rtpAudio, _ = net.ListenUDP("udp", nil)
 	}

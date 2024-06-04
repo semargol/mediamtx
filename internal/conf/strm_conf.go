@@ -1,8 +1,8 @@
 package conf
 
 type RTPRConf struct {
-	VideoURL   string
-	AudioURL   string
+	VideoPort  int
+	AudioPort  int
 	VideoCodec string
 	AudioCodec string
 	VideoPT    int
@@ -29,8 +29,8 @@ type PipeConfig struct {
 }
 
 type RTPSConf struct {
-	VideoPort  int
-	AudioPort  int
+	VideoURL   string
+	AudioURL   string
 	Name       string
 	VideoCodec string
 }

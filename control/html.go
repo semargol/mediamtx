@@ -125,7 +125,7 @@ func response_or_event(msg *api.Message) {
 		for _, p := range c.Pipes {
 			r := p.RTPR
 			pp := fmt.Sprintf("     PIPE:     id=%d name=%s type=%s state=%s source=%s\n", p.ID, p.Name, p.Type, p.State, p.Source)
-			rt := fmt.Sprintf("         RTPR: name=%s ror=%s video=%s,%d,%s audio=%s,%d,%s\n", r.Name, r.RunOnReady, r.VideoCodec, r.VideoPT, r.VideoURL, r.AudioCodec, r.AudioPT, r.AudioURL)
+			rt := fmt.Sprintf("         RTPR: name=%s ror=%s video=%s,%d,%d audio=%s,%d,%d\n", r.Name, r.RunOnReady, r.VideoCodec, r.VideoPT, r.VideoPort, r.AudioCodec, r.AudioPT, r.AudioPort)
 			_ = controlConnection.WriteMessage(websocket.TextMessage, []byte(pp))
 			_ = controlConnection.WriteMessage(websocket.TextMessage, []byte(rt))
 		}
