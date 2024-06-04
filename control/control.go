@@ -131,8 +131,12 @@ func PrintConfig(c *conf.StrmConf) {
 		fmt.Printf("     RTSPSRV:  addr=%s state=%s\n", c.RTSPSRV.Address, c.RTSPSRV.State)
 		for _, p := range c.Pipes {
 			r := p.RTPR
-			fmt.Printf("     PIPE:     id=%d name=%s type=%s state=%s source=%s\n", p.ID, p.Name, p.Type, p.State, p.Source)
-			fmt.Printf("         RTPR: name=%s ror=%s video=%s,%d,%s audio=%s,%d,%s\n", r.Name, r.RunOnReady, r.VideoCodec, r.VideoPT, r.VideoURL, r.AudioCodec, r.AudioPT, r.AudioURL)
+			x := p.RTSPCL
+			s := p.RTPS
+			fmt.Printf("     PIPE:  id=%d name=%s type=%s state=%s source=%s\n", p.ID, p.Name, p.Type, p.State, p.Source)
+			fmt.Printf("         RTP-R:   name=%s ror=%s video=%s,%d,%s audio=%s,%d,%s\n", r.Name, r.RunOnReady, r.VideoCodec, r.VideoPT, r.VideoURL, r.AudioCodec, r.AudioPT, r.AudioURL)
+			fmt.Printf("         RTP-S:   name=%s ror=%s video=%s,%s,%d audio=%s,%s,%d\n", s.Name, " ", s.VideoCodec, "PT", s.VideoPort, "opus", "PT", s.AudioPort)
+			fmt.Printf("         RTSP-CL: url=%s\n", x.Url)
 		}
 	}
 }
