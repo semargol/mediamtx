@@ -26,6 +26,7 @@ func NewApiServer(serverEp string, brokerEp string, api *API) *ApiServer {
 	s.cancel = cancel
 
 	defaultStrmConf := conf.InitializeDefaultStrmConf()
+	conf.StrmGlobalConf = &defaultStrmConf
 	s.strmConf = &defaultStrmConf
 	/*
 		s.Transceiver.Open(serverEp)
@@ -67,6 +68,11 @@ type ApiServer struct {
 	mutex      sync.Mutex
 	cancel     func()
 	respev     Message
+}
+
+func (t *ApiServer) GetStrmConf() *conf.StrmConf {
+	return t.strmConf
+	//t.Transceiver.SendTo(msg, t.brokerAddr)
 }
 
 func (t *ApiServer) SendTo(msg Message) {
@@ -237,6 +243,17 @@ func (s *ApiServer) Listen() {
 				{
 					// response, _ = ApiGetRtp(s.api, &request)
 					response, _ = ApiGetSubConfigField(s, &request, "RTPR")
+					//fmt.Println("response: ", response)
+				}
+			case "set/rtps":
+				{
+					// response, _ = ApiSetRtp(s.api, &request)
+					response, _ = ApiUpdatePipeConfig(s, &request, "RTPS")
+				}
+			case "get/rtps":
+				{
+					// response, _ = ApiGetRtp(s.api, &request)
+					response, _ = ApiGetSubConfigField(s, &request, "RTPS")
 					//fmt.Println("response: ", response)
 				}
 			case "set/rtspcl":
