@@ -58,3 +58,30 @@ func InitializeDefaultStrmConf() StrmConf {
 		},
 	}
 }
+
+var StrmGlobalConf *StrmConf
+
+func (s *StrmConf) LookupRTPSbyURL(url string) *RTPSConf {
+	var pc *RTPSConf = nil
+	for _, spc := range s.Pipes {
+		if spc.RTSPCL.Url == url {
+			pc = &spc.RTPS
+		}
+	}
+	return pc
+}
+
+func GetStrmConf() *StrmConf {
+	return StrmGlobalConf
+}
+
+func LookupRTPSbyURL(url string) *RTPSConf {
+	s := GetStrmConf()
+	var pc *RTPSConf = nil
+	for _, spc := range s.Pipes {
+		if spc.RTSPCL.Url == url {
+			pc = &spc.RTPS
+		}
+	}
+	return pc
+}
