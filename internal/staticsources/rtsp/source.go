@@ -3,6 +3,7 @@ package rtsp
 
 import (
 	"net"
+	"strings"
 	"time"
 
 	"github.com/bluenviron/gortsplib/v4"
@@ -99,12 +100,27 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 
 	rconf := conf.LookupRTPSbyURL(s.ResolvedSource)
 	if rconf != nil {
-		adress := rconf.VideoURL[len("udp://"):]
-		s.rtpVideoAddr, _ = net.ResolveUDPAddr("udp", adress)
-		adress = rconf.AudioURL[len("udp://"):]
-		s.rtpAudioAddr, _ = net.ResolveUDPAddr("udp", adress)
-		s.rtpVideo, _ = net.ListenUDP("udp", nil)
-		s.rtpAudio, _ = net.ListenUDP("udp", nil)
+		var erv, era error
+		var scheme, adress string
+		var found bool
+
+		scheme, adress, found = strings.Cut(rconf.VideoURL, "//") // rconf.VideoURL[len("udp://"):]
+		if !found {
+			adress = scheme
+		}
+		s.rtpVideoAddr, erv = net.ResolveUDPAddr("udp", adress)
+		if erv == nil {
+			s.rtpVideo, _ = net.ListenUDP("udp", nil)
+		}
+
+		scheme, adress, found = strings.Cut(rconf.AudioURL, "//") // rconf.AudioURL[len("udp://"):]
+		if !found {
+			adress = scheme
+		}
+		s.rtpAudioAddr, era = net.ResolveUDPAddr("udp", adress)
+		if era == nil {
+			s.rtpAudio, _ = net.ListenUDP("udp", nil)
+		}
 	}
 
 	c := &gortsplib.Client{
