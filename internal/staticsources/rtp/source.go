@@ -200,6 +200,7 @@ func (s *Source) runReaderVideo(pc net.PacketConn,
 			fmt.Println("Failed to unmarshal RTP packet:", err)
 			continue
 		}
+		// fmt.Println(pkt)
 		pts, ok := timeDecoder.Decode(medias[0].Formats[0], &pkt)
 		if !ok {
 			continue
