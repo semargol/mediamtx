@@ -137,8 +137,8 @@ func ConfigSync(t *ApiServer) {
 			pipeConfig.State == "start" {
 			newConf.AddPath(pipeConfig.Name, nil)
 			newConf.Validate()
-			videoSource := fmt.Sprintf("rtp://0.0.0.0:%d", pipeConfig.RTPR.VideoPort)
-			audioSource := fmt.Sprintf("rtp://0.0.0.0:%d", pipeConfig.RTPR.AudioPort)
+			videoSource := fmt.Sprintf("rtp://:%d", pipeConfig.RTPR.VideoPort)
+			audioSource := fmt.Sprintf("rtp://:%d", pipeConfig.RTPR.AudioPort)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "Source", videoSource)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "AudioSource", audioSource)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "VideoCodec", pipeConfig.RTPR.VideoCodec)
