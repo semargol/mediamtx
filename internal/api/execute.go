@@ -36,10 +36,10 @@ func errorf(format string, a ...interface{}) error {
 	return err
 }
 
-func getError(req *Message, errorCode int) (Message, int) {
+func getError(req *Message, errorCode int, str string) (Message, int) {
 	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 	response.Data["result"] = strconv.Itoa(errorCode)
-	response.Data["errorMsg"] = getErrorDescription(errorCode, true)
+	response.Data["errorMsg"] = getErrorDescription(errorCode, str, true)
 	return response, errorCode
 }
 func setField(p *conf.OptionalPath, fieldName string, newValue interface{}) {
@@ -204,19 +204,19 @@ func ApiUpdatePipeConfig(api *ApiServer, req *Message, configType string) (Messa
 	// Extracting pipe ID from the request
 	id, err := ExtractID(req)
 	if err != nil {
-		return getError(req, 100)
+		return getError(req, 100, "")
 	}
 
 	pipe, exists := api.strmConf.Pipes[id]
 	if !exists {
-		return getError(req, 101)
+		return getError(req, 101, "")
 	}
 
 	// Obtain the field (RTPR or RTPS) using reflection
 	v := reflect.ValueOf(&pipe).Elem()
 	field := v.FieldByName(configType)
 	if !field.IsValid() {
-		return getError(req, 104)
+		return getError(req, 104, configType)
 	}
 
 	// Create a map to match lowercased field names to reflect.Value fields
@@ -236,7 +236,7 @@ func ApiUpdatePipeConfig(api *ApiServer, req *Message, configType string) (Messa
 
 		subField, found := fieldsMap[lowerKey]
 		if !found {
-			return getError(req, 104)
+			return getError(req, 104, key)
 		}
 
 		if subField.CanSet() {
@@ -246,11 +246,11 @@ func ApiUpdatePipeConfig(api *ApiServer, req *Message, configType string) (Messa
 			case reflect.Int:
 				intValue, err := strconv.Atoi(value)
 				if err != nil {
-					return getError(req, 105)
+					return getError(req, 105, key)
 				}
 				subField.SetInt(int64(intValue))
 			default:
-				return getError(req, 105)
+				return getError(req, 105, key)
 			}
 		}
 	}
@@ -268,7 +268,7 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
 	// Use ExtractID to get the ID from the message
 	id, err := ExtractID(req)
 	if err != nil {
-		return getError(req, 100)
+		return getError(req, 100, "")
 	}
 
 	// Check for existing ID
@@ -276,7 +276,7 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
 		t.strmConf.Pipes = make(map[int]conf.PipeConfig)
 	}
 	if _, exists := t.strmConf.Pipes[id]; exists {
-		return getError(req, 102)
+		return getError(req, 102, "")
 	}
 	// Create a new PipeConfig and add it to the map
 	newPipe := conf.PipeConfig{
@@ -329,7 +329,7 @@ func ApiDelPipe(api *ApiServer, req *Message) (Message, int) {
 	id, _ := ExtractID(req)
 	err := DeletePipeByID(api, id)
 	if err != nil {
-		return getError(req, 103)
+		return getError(req, 103, "")
 	} else {
 		ConfigSync(api)
 	}
@@ -360,13 +360,13 @@ func ApiSetPipe(t *ApiServer, req *Message) (Message, int) {
 	// Extracting pipe ID from the request
 	id, err := ExtractID(req)
 	if err != nil {
-		return getError(req, 100)
+		return getError(req, 100, "")
 	}
 
 	// Retrieving the PipeConfig
 	pipe, exists := t.strmConf.Pipes[id]
 	if !exists {
-		return getError(req, 101)
+		return getError(req, 101, "")
 	}
 
 	// Using reflection to set field dynamically and case-insensitively
@@ -458,13 +458,13 @@ func ApiGetPipe(api *ApiServer, req *Message) (Message, int) {
 	// Extract the pipe ID from the request
 	id, err := ExtractID(req)
 	if err != nil {
-		return getError(req, 100)
+		return getError(req, 100, "")
 	}
 
 	// Retrieve the specific PipeConfig
 	pipe, exists := api.strmConf.Pipes[id]
 	if !exists {
-		return getError(req, 101)
+		return getError(req, 101, "")
 	}
 
 	// Iterate over each data key in the request (these are field names)
@@ -484,7 +484,7 @@ func ApiGetPipe(api *ApiServer, req *Message) (Message, int) {
 		fieldName := strings.ToLower(lowerKey) // Assume field names are in correct case
 		fieldValue := fieldsMap[lowerKey]
 		if !fieldValue.IsValid() {
-			return getError(req, 104)
+			return getError(req, 104, key)
 		}
 
 		// Convert the field value to a string representation
@@ -499,7 +499,7 @@ func ApiGetPipe(api *ApiServer, req *Message) (Message, int) {
 		case reflect.Bool:
 			valueStr = strconv.FormatBool(fieldValue.Bool())
 		default:
-			return getError(req, 104)
+			return getError(req, 104, key)
 		}
 
 		response.Data[strings.ToLower(fieldName)] = valueStr
@@ -513,19 +513,19 @@ func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Mess
 	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
 	id, err := ExtractID(req)
 	if err != nil {
-		return getError(req, 100)
+		return getError(req, 100, "")
 	}
 
 	pipe, exists := api.strmConf.Pipes[id]
 	if !exists {
-		return getError(req, 101)
+		return getError(req, 101, "")
 	}
 
 	v := reflect.ValueOf(&pipe).Elem()
 	subConfigField := v.FieldByName(configType)
 	//fmt.Println("subConfigField: ", subConfigField)
 	if !subConfigField.IsValid() {
-		return getError(req, 104)
+		return getError(req, 104, configType)
 	}
 
 	// Create a map to match lowercased field names to reflect.Value fields
@@ -546,7 +546,7 @@ func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Mess
 		//fmt.Println("fieldName: ", fieldName)
 		fieldValue := fieldsMap[lowerKey]
 		if !fieldValue.IsValid() {
-			return getError(req, 104)
+			return getError(req, 104, key)
 		}
 
 		// Convert the field value to a string representation
@@ -559,7 +559,7 @@ func ApiGetSubConfigField(api *ApiServer, req *Message, configType string) (Mess
 		case reflect.Bool:
 			valueStr = strconv.FormatBool(fieldValue.Bool())
 		default:
-			return getError(req, 105)
+			return getError(req, 105, key)
 		}
 
 		response.Data[strings.ToLower(fieldName)] = valueStr
@@ -589,7 +589,7 @@ func ApiGetRtsp(api *ApiServer, req *Message) (Message, int) {
 		fieldName := strings.ToLower(lowerKey) // Assume field names are in correct case
 		fieldValue := fieldsMap[lowerKey]
 		if !fieldValue.IsValid() {
-			return getError(req, 104)
+			return getError(req, 104, key)
 		}
 
 		// Convert the field value to a string representation
@@ -604,7 +604,7 @@ func ApiGetRtsp(api *ApiServer, req *Message) (Message, int) {
 		case reflect.Bool:
 			valueStr = strconv.FormatBool(fieldValue.Bool())
 		default:
-			return getError(req, 104)
+			return getError(req, 105, key)
 		}
 
 		response.Data[strings.ToLower(fieldName)] = valueStr

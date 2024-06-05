@@ -7,7 +7,7 @@ type ErrorDescription struct {
 	Russian string
 }
 
-func getErrorDescription(errorCode int, opts ...interface{}) string {
+func getErrorDescription(errorCode int, str string, opts ...interface{}) string {
 	errors := map[int]ErrorDescription{
 		100: {
 			English: "Cannot extract ID",
@@ -26,12 +26,12 @@ func getErrorDescription(errorCode int, opts ...interface{}) string {
 			Russian: "Невозможно удалить pipe с заданным ID",
 		},
 		104: {
-			English: "Field not found in pipe config",
-			Russian: "Поле не найдено в конфигурации pipe",
+			English: fmt.Sprintf("Field '%s' not found in pipe config", str),
+			Russian: fmt.Sprintf("Поле '%s' не найдено в конфигурации pipe", str),
 		},
 		105: {
-			English: "Unsupported type for field",
-			Russian: "Неподдерживаемый тип поля",
+			English: fmt.Sprintf("Unsupported type for field '%s' ", str),
+			Russian: fmt.Sprintf("Неподдерживаемый тип для поля '%s' ", str),
 		},
 	}
 
