@@ -193,6 +193,16 @@ func (s *ApiServer) Listen() {
 			request = *reqmsg
 			fmt.Println("request: ", request)
 			switch request.Verb + "/" + request.Noun {
+			case "log/on":
+				{
+					s.strmConf.LogLavel = 1
+					ConfigSync(s)
+				}
+			case "log/off":
+				{
+					s.strmConf.LogLavel = 4
+					ConfigSync(s)
+				}
 			case "get/config":
 				{
 					jsonConf, readableConf, err := GetStrmConfig(s)

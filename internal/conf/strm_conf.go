@@ -40,9 +40,10 @@ type RTSPCLConf struct {
 }
 
 type StrmConf struct {
-	Pipes   map[int]PipeConfig
-	RTSPSRV ServerConfig
-	WebRTC  ServerConfig
+	LogLavel int
+	Pipes    map[int]PipeConfig
+	RTSPSRV  ServerConfig
+	WebRTC   ServerConfig
 }
 
 type ServerConfig struct {
@@ -52,6 +53,7 @@ type ServerConfig struct {
 
 func InitializeDefaultStrmConf() StrmConf {
 	return StrmConf{
+		LogLavel: 4,
 		RTSPSRV: ServerConfig{
 			Address: ":8554",
 			State:   "stop",
