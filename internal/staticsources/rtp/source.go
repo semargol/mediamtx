@@ -247,7 +247,7 @@ func (s *Source) runReaderAudio(pc net.PacketConn,
 		// 	un)
 		stream.WriteRTPPacket(medias[1],
 			medias[1].Formats[0],
-			&pkt, time.Now(), time.Duration(0))
+			&pkt, time.Now().Add(2*time.Second), time.Duration(0))
 	}
 }
 
