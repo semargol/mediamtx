@@ -75,7 +75,7 @@ func CalculateOffset(NTPTime uint64, RTPTime uint32, RTPClockRate uint32) int64 
 	RTPNTP := (uint64(RTPTime)) / uint64(RTPClockRate)
 
 	// Calculate the difference between NTPTime and RTPNTP in seconds
-	offset := (int64(ntpTime.Unix()) - int64(RTPNTP))
+	offset := (int64(ntpTime.UnixMilli()) - int64(RTPNTP*1000))
 	return offset
 }
 
@@ -91,10 +91,10 @@ func CalculateOffset(NTPTime uint64, RTPTime uint32, RTPClockRate uint32) int64 
 func CalculateNTPTime(RTPTime uint32, RTPClockRate uint32, offset int64) time.Time {
 	// Вычисляем количество секунд, прошедших с начала эпохи Unix, используя offset
 	// Для аудио потока с частотой 48000, необходимо учитывать различие в частотах тактов
-	ntpSeconds := int64(offset) + int64(RTPTime)*1000/int64(RTPClockRate)
+	ntpMilSeconds := offset + 1000*int64(RTPTime)/int64(RTPClockRate)
 
 	// Создаем объект time.Time из количества секунд
-	ntpTime := time.Unix(ntpSeconds, 0)
+	ntpTime := time.UnixMilli(ntpMilSeconds)
 
 	return ntpTime
 }
@@ -326,7 +326,7 @@ func (s *Source) runReaderVideo(pc net.PacketConn,
 
 		// stream.WriteRTPPacket(medias[0],
 		// 	medias[0].Formats[0],
-		// 	&pkt, time.Now(), time.Duration(0))
+		// 	&pkt, newNTPTime, pts)
 	}
 }
 
@@ -362,8 +362,9 @@ func (s *Source) runReaderAudio(pc net.PacketConn,
 		// stream.WriteRTPPacket(medias[1],
 		// 	medias[1].Formats[0],
 		// 	&pkt, time.Now().Add(time.Duration(td)*time.Millisecond), pts)
-		newNTPTime := CalculateNTPTime(pkt.Timestamp, 48000, s.videoOffset)
+		newNTPTime := CalculateNTPTime(pkt.Timestamp, 48000, s.audioOffset)
 		// fmt.Println("New a NTPTime:", newNTPTime)
+		// fmt.Println("Time.Now:", time.Now())
 		stream.WriteRTPPacket(medias[1],
 			medias[1].Formats[0],
 			&pkt, newNTPTime, pts)
@@ -428,7 +429,7 @@ func (s *Source) handleRTCPPacket(packet rtcp.Packet) {
 			// fmt.Printf("Updated videoNTPTime to %d\n", s.videoNTPTime)
 			// fmt.Println(pkt)
 			s.videoOffset = CalculateOffset(pkt.NTPTime, pkt.RTPTime, 90000)
-			fmt.Println("offset: ", s.videoOffset)
+			// fmt.Println("offset: ", s.videoOffset)
 			// Calculate time difference
 			if s.videoNTPTime != 0 && s.audioNTPTime != 0 {
 				s.td = calculateNTPTimestampDifference(s.audioNTPTime, s.videoNTPTime)
