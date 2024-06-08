@@ -264,7 +264,6 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 func (s *Source) runReaderVideo(pc net.PacketConn,
 	stream *stream.Stream,
 	medias []*description.Media, buf []byte) error {
-	// trackWrapper := &webrtc.TrackWrapper{ClockRat: medias[0].Formats[0].ClockRate()}
 	timeDecoder := rtptime.NewGlobalDecoder()
 	p, _ := formatprocessor.New(udpKernelReadBufferSize, medias[0].Formats[0], false)
 	for {
