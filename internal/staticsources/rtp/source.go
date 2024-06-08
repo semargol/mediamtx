@@ -153,6 +153,9 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 		fmt.Println("Invalid PPS base64:", err)
 	}
 
+	s.Log(logger.Debug, "SPS: ", sps)
+	s.Log(logger.Debug, "PPS: ", pps)
+
 	videoMedi := &description.Media{
 		Type: description.MediaTypeVideo,
 		Formats: []format.Format{&format.H264{
@@ -165,6 +168,7 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 
 	if strings.EqualFold(s.VideoCodec, "h265") {
 		vps, err := base64.StdEncoding.DecodeString(s.VPS)
+		s.Log(logger.Debug, "VPS: ", vps)
 		if err != nil {
 			fmt.Println("Invalid PPS base64:", err)
 		}
@@ -310,7 +314,7 @@ func (s *Source) runReaderVideo(pc net.PacketConn,
 		}
 		// fmt.Println("pts video: ", pts)
 		newNTPTime := CalculateNTPTime(pkt.Timestamp, 90000, s.videoOffset)
-		fmt.Println("New v NTPTime:", newNTPTime)
+		// fmt.Println("New v NTPTime:", newNTPTime)
 		un, err := p.ProcessRTPPacket(&pkt, newNTPTime, pts, false)
 		if err != nil {
 			fmt.Println("err: ", err)
@@ -351,8 +355,8 @@ func (s *Source) runReaderAudio(pc net.PacketConn,
 		}
 
 		newNTPTime := CalculateNTPTime(pkt.Timestamp, 48000, s.audioOffset)
-		fmt.Println("New a NTPTime:", newNTPTime)
-		fmt.Println("Time.Now:", time.Now())
+		// fmt.Println("New a NTPTime:", newNTPTime)
+		// fmt.Println("Time.Now:", time.Now())
 		stream.WriteRTPPacket(medias[1],
 			medias[1].Formats[0],
 			&pkt, newNTPTime, pts)
