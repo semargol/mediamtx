@@ -19,7 +19,7 @@ readTimeout: 10s
 writeTimeout: 10s
 # Size of the queue of outgoing packets.
 # A higher value allows to increase throughput, a lower value allows to save RAM.
-writeQueueSize: 512
+writeQueueSize: 16384
 # Maximum size of outgoing UDP packets.
 # This can be decreased to avoid fragmentation on networks with a low UDP MTU.
 udpMaxPayloadSize: 1472
@@ -152,7 +152,7 @@ playbackAddress: :9996
 # Global settings -> RTSP server
 
 # Enable publishing and reading streams with the RTSP protocol.
-rtsp: no
+rtsp: yes
 # List of enabled RTSP transport protocols.
 # UDP is the most performant, but doesn't work when there's a NAT/firewall between
 # server and clients, and doesn't support encryption.
@@ -615,9 +615,15 @@ pathDefaults:
 # for example "~^prefix" will match all paths that start with "prefix".
 paths:
   # example:
-  #mypath:
-     #source: rtp://127.0.0.1:5000
-     #audioSource: rtp://127.0.0.1:5002
+  # pipe1:
+  #    source: rtp://:5000
+  #    audioSource: rtp://:5002
+  #pipe2:
+     #source: rtp://:5100
+     #audioSource: rtp://:5102
+     #videocodec: h265
+     #videopt: 96
+     #audiopt: 97
      #ffmpeg -re -stream_loop -1 -i balet.mp4 -an -c:v libx264 -f rtp rtp://127.0.0.1:5000 -vn -c:a copy -f  rtp rtp://127.0.0.1:5002 -sdp_file balet.sdp
   #av_server_2:
   #   source: rtsp://localhost:8554/av_server_1
