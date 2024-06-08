@@ -40,6 +40,9 @@ type Source struct {
 	VideoCodec         string
 	VideoPT            int
 	AudioPT            int
+	SPS                string
+	VPS                string
+	PPS                string
 	ReadTimeout        conf.StringDuration
 	Parent             defs.StaticSourceParent
 
@@ -139,27 +142,15 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 	defer pcRTCPVideo.Close()
 
 	go s.runRTCPReader(pcRTCPVideo, s.videoSSRC)
-	sprop := "Z2QAH6zZQFAFuwFqAgICgAAAAwCAAAAZB4wYyw==,aOvjyyLA"
 
-	// Разделяем строку на две части
-	parts := strings.Split(sprop, ",")
-	if len(parts) != 2 {
-		fmt.Println("Invalid sprop-parameter-sets")
-
-	}
-
-	// Декодируем SPS
-	sps, err := base64.StdEncoding.DecodeString(parts[0])
+	sps, err := base64.StdEncoding.DecodeString(s.SPS)
 	if err != nil {
 		fmt.Println("Invalid SPS base64:", err)
-
 	}
 
-	// Декодируем PPS
-	pps, err := base64.StdEncoding.DecodeString(parts[1])
+	pps, err := base64.StdEncoding.DecodeString(s.PPS)
 	if err != nil {
 		fmt.Println("Invalid PPS base64:", err)
-
 	}
 
 	videoMedi := &description.Media{
@@ -173,10 +164,18 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 	}
 
 	if strings.EqualFold(s.VideoCodec, "h265") {
+		vps, err := base64.StdEncoding.DecodeString(s.VPS)
+		if err != nil {
+			fmt.Println("Invalid PPS base64:", err)
+		}
+
 		videoMedi = &description.Media{
 			Type: description.MediaTypeVideo,
 			Formats: []format.Format{&format.H265{
 				PayloadTyp: uint8(s.VideoPT),
+				SPS:        sps,
+				VPS:        vps,
+				PPS:        pps,
 			}},
 		}
 	}
@@ -312,7 +311,7 @@ func (s *Source) runReaderVideo(pc net.PacketConn,
 		// fmt.Println("pts video: ", pts)
 		newNTPTime := CalculateNTPTime(pkt.Timestamp, 90000, s.videoOffset)
 		fmt.Println("New v NTPTime:", newNTPTime)
-		un, err := p.ProcessRTPPacket(&pkt, time.Now(), pts, false)
+		un, err := p.ProcessRTPPacket(&pkt, newNTPTime, pts, false)
 		if err != nil {
 			fmt.Println("err: ", err)
 		}
@@ -356,7 +355,7 @@ func (s *Source) runReaderAudio(pc net.PacketConn,
 		fmt.Println("Time.Now:", time.Now())
 		stream.WriteRTPPacket(medias[1],
 			medias[1].Formats[0],
-			&pkt, time.Now(), pts)
+			&pkt, newNTPTime, pts)
 		// mu.Unlock()
 		// stream.WriteRTPPacket(medias[1],
 		// 	medias[1].Formats[0],

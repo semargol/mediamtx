@@ -93,6 +93,9 @@ func (s *staticSourceHandler) initialize() {
 			VideoCodec:         s.conf.VideoCodec,
 			VideoPT:            s.conf.VideoPT,
 			AudioPT:            s.conf.AudioPT,
+			SPS:                s.conf.SPS,
+			VPS:                s.conf.VPS,
+			PPS:                s.conf.PPS,
 			ReadTimeout:        s.readTimeout,
 			Parent:             s,
 		}

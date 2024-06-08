@@ -122,6 +122,9 @@ type Path struct {
 	VideoCodec  string `json:"videoCodec,omitempty"`
 	VideoPT     int    `json:"videoPT,omitempty"`
 	AudioPT     int    `json:"audioPT,omitempty"`
+	SPS         string `json:"sps,omitempty"`
+	VPS         string `json:"vps,omitempty"`
+	PPS         string `json:"pps,omitempty"`
 
 	// RTSP source
 	RTSPTransport       RTSPTransport  `json:"rtspTransport"`
