@@ -41,6 +41,62 @@ type Source struct {
 	AudioPT            int
 	ReadTimeout        conf.StringDuration
 	Parent             defs.StaticSourceParent
+
+	videoNTPTime uint64
+	videoOffset  int64
+	audioNTPTime uint64
+	audioOffset  int64
+	videoSSRC    uint32
+	audioSSRC    uint32
+	td           float64
+	mu           sync.Mutex
+}
+
+func ConvertNTPTime(NTPTime uint64) time.Time {
+	// Количество секунд в NTP с 1 января 1900 года до 1 января 1970 года (эпоха Unix)
+	const ntpUnixEpochOffset = 2208988800
+
+	// Разделение NTPTime на секунды и доли секунды
+	secs := int64(NTPTime >> 32)
+	frac := uint64((NTPTime & 0xFFFFFFFF) * 1e9 >> 32)
+
+	// Создание объекта time.Time из секунд и долей секунды
+	ntpTime := time.Unix(secs-ntpUnixEpochOffset, int64(frac))
+
+	return ntpTime
+}
+
+func CalculateOffset(NTPTime uint64, RTPTime uint32, RTPClockRate uint32) int64 {
+	ntpTime := ConvertNTPTime(NTPTime)
+	fmt.Println("RTPClockRate: ", RTPClockRate)
+	fmt.Println(" NTP Time:", ntpTime)
+
+	// Convert RTPTime to NTP format (seconds and fraction of a second)
+	RTPNTP := (uint64(RTPTime)) / uint64(RTPClockRate)
+
+	// Calculate the difference between NTPTime and RTPNTP in seconds
+	offset := (int64(ntpTime.Unix()) - int64(RTPNTP))
+	return offset
+}
+
+// func CalculateNTPTime(RTPTime uint32, RTPClockRate uint32, offset int64) time.Time {
+// 	ntpSeconds := int64(offset) + int64(RTPTime)/int64(RTPClockRate)
+// 	// ntpTime := time.Unix(ntpSeconds, 0)
+// 	ntpTime := time.Unix(ntpSeconds, 0)
+// 	fmt.Println("RTPClockRate: ", RTPClockRate)
+// 	fmt.Println(" NTP newTime:", ntpTime)
+// 	return ntpTime
+// }
+
+func CalculateNTPTime(RTPTime uint32, RTPClockRate uint32, offset int64) time.Time {
+	// Вычисляем количество секунд, прошедших с начала эпохи Unix, используя offset
+	// Для аудио потока с частотой 48000, необходимо учитывать различие в частотах тактов
+	ntpSeconds := int64(offset) + int64(RTPTime)*1000/int64(RTPClockRate)
+
+	// Создаем объект time.Time из количества секунд
+	ntpTime := time.Unix(ntpSeconds, 0)
+
+	return ntpTime
 }
 
 // Log implements logger.Writer.
@@ -48,15 +104,15 @@ func (s *Source) Log(level logger.Level, format string, args ...interface{}) {
 	s.Parent.Log(level, "[RTP source] "+format, args...)
 }
 
-// Global variables for storing NTP timestamps and SSRCs
-var (
-	videoNTPTime uint64
-	audioNTPTime uint64
-	videoSSRC    uint32
-	audioSSRC    uint32
-	td           float64
-	mu           sync.Mutex
-)
+// // Global variables for storing NTP timestamps and SSRCs
+// var (
+// 	videoNTPTime uint64
+// 	audioNTPTime uint64
+// 	videoSSRC    uint32
+// 	audioSSRC    uint32
+// 	td           float64
+// 	mu           sync.Mutex
+// )
 
 func (s *Source) Run(params defs.StaticSourceRunParams) error {
 	s.Log(logger.Debug, "connecting")
@@ -105,7 +161,7 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 	pcRTCPVideo = tmp.(*net.UDPConn)
 	defer pcRTCPVideo.Close()
 
-	go runRTCPReader(pcRTCPVideo, videoSSRC)
+	go s.runRTCPReader(pcRTCPVideo, s.videoSSRC)
 
 	videoMedi := &description.Media{
 		Type: description.MediaTypeVideo,
@@ -165,7 +221,7 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 		pcRTCPAudio = tmp.(*net.UDPConn)
 		defer pcRTCPAudio.Close()
 
-		go runRTCPReader(pcRTCPAudio, audioSSRC)
+		go s.runRTCPReader(pcRTCPAudio, s.audioSSRC)
 
 		audioMedi := &description.Media{
 			Type: description.MediaTypeAudio,
@@ -248,17 +304,18 @@ func (s *Source) runReaderVideo(pc net.PacketConn,
 			continue
 		}
 		// Initialize videoSSRC
-		if videoSSRC == 0 {
-			videoSSRC = pkt.SSRC
-			fmt.Printf("Initialized videoSSRC to %d\n", videoSSRC)
+		if s.videoSSRC == 0 {
+			s.videoSSRC = pkt.SSRC
+			fmt.Printf("Initialized videoSSRC to %d\n", s.videoSSRC)
 		}
 		pts, ok := timeDecoder.Decode(medias[0].Formats[0], &pkt)
 		if !ok {
 			continue
 		}
 		// fmt.Println("pts video: ", pts)
-
-		un, err := p.ProcessRTPPacket(&pkt, time.Now(), pts, false)
+		newNTPTime := CalculateNTPTime(pkt.Timestamp, 90000, s.videoOffset)
+		// fmt.Println("New v NTPTime:", newNTPTime)
+		un, err := p.ProcessRTPPacket(&pkt, newNTPTime, pts, false)
 		if err != nil {
 			fmt.Println("err: ", err)
 		}
@@ -290,9 +347,9 @@ func (s *Source) runReaderAudio(pc net.PacketConn,
 			continue
 		}
 		// Initialize audioSSRC
-		if audioSSRC == 0 {
-			audioSSRC = pkt.SSRC
-			fmt.Printf("Initialized audioSSRC to %d\n", audioSSRC)
+		if s.audioSSRC == 0 {
+			s.audioSSRC = pkt.SSRC
+			fmt.Printf("Initialized audioSSRC to %d\n", s.audioSSRC)
 		}
 
 		pts, ok := timeDecoder.Decode(medias[1].Formats[0], &pkt)
@@ -302,9 +359,14 @@ func (s *Source) runReaderAudio(pc net.PacketConn,
 		// fmt.Println("pts audio: ", pts)
 		// mu.Lock()
 		// defer mu.Unlock()
+		// stream.WriteRTPPacket(medias[1],
+		// 	medias[1].Formats[0],
+		// 	&pkt, time.Now().Add(time.Duration(td)*time.Millisecond), pts)
+		newNTPTime := CalculateNTPTime(pkt.Timestamp, 48000, s.videoOffset)
+		// fmt.Println("New a NTPTime:", newNTPTime)
 		stream.WriteRTPPacket(medias[1],
 			medias[1].Formats[0],
-			&pkt, time.Now().Add(time.Duration(td)*time.Millisecond), pts)
+			&pkt, newNTPTime, pts)
 		// mu.Unlock()
 		// stream.WriteRTPPacket(medias[1],
 		// 	medias[1].Formats[0],
@@ -351,27 +413,31 @@ func clearUDPQueue(pc net.PacketConn) {
 	pc.SetReadDeadline(time.Time{})
 }
 
-func handleRTCPPacket(packet rtcp.Packet) {
-	mu.Lock()
-	defer mu.Unlock()
+func (s *Source) handleRTCPPacket(packet rtcp.Packet) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	fmt.Printf("Received RTCP packet of type: %T\n", packet)
+	// fmt.Printf("Received RTCP packet of type: %T\n", packet)
 
 	switch pkt := packet.(type) {
 	case *rtcp.SenderReport:
 		ssrc := pkt.SSRC
-		fmt.Println("Received SenderReport:", pkt)
-		if ssrc == videoSSRC {
-			videoNTPTime = pkt.NTPTime
-			fmt.Printf("Updated videoNTPTime to %d\n", videoNTPTime)
+		// fmt.Println("Received SenderReport:", pkt)
+		if ssrc == s.videoSSRC {
+			s.videoNTPTime = pkt.NTPTime
+			// fmt.Printf("Updated videoNTPTime to %d\n", s.videoNTPTime)
+			// fmt.Println(pkt)
+			s.videoOffset = CalculateOffset(pkt.NTPTime, pkt.RTPTime, 90000)
+			fmt.Println("offset: ", s.videoOffset)
 			// Calculate time difference
-			if videoNTPTime != 0 && audioNTPTime != 0 {
-				td = calculateNTPTimestampDifference(audioNTPTime, videoNTPTime)
-				fmt.Println("NTP time difference between video and audio:", td)
+			if s.videoNTPTime != 0 && s.audioNTPTime != 0 {
+				s.td = calculateNTPTimestampDifference(s.audioNTPTime, s.videoNTPTime)
+				// fmt.Println("NTP time difference between video and audio:", s.td)
 			}
-		} else if ssrc == audioSSRC {
-			audioNTPTime = pkt.NTPTime
-			fmt.Printf("Updated audioNTPTime to %d\n", audioNTPTime)
+		} else if ssrc == s.audioSSRC {
+			s.audioNTPTime = pkt.NTPTime
+			s.audioOffset = CalculateOffset(pkt.NTPTime, pkt.RTPTime, 48000)
+			// fmt.Printf("Updated audioNTPTime to %d\n", s.audioNTPTime)
 		} else {
 			fmt.Printf("Unknown SSRC: %d\n", pkt.SSRC)
 		}
@@ -384,7 +450,7 @@ func handleRTCPPacket(packet rtcp.Packet) {
 	}
 }
 
-func runRTCPReader(pc net.PacketConn, ssrc uint32) {
+func (s *Source) runRTCPReader(pc net.PacketConn, ssrc uint32) {
 	buf := make([]byte, 1500)
 	for {
 		n, _, err := pc.ReadFrom(buf)
@@ -403,45 +469,8 @@ func runRTCPReader(pc net.PacketConn, ssrc uint32) {
 		}
 
 		for _, pkt := range packets {
-			fmt.Printf("Processing RTCP packet of type: %T\n", pkt)
-			handleRTCPPacket(pkt)
-		}
-	}
-}
-
-// Goroutine to send RTCP Receiver Reports
-func runRTCPSender(pc net.PacketConn) {
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		mu.Lock()
-
-		rr := &rtcp.ReceiverReport{
-			SSRC: videoSSRC,
-			Reports: []rtcp.ReceptionReport{
-				{
-					SSRC:               videoSSRC,
-					FractionLost:       0,
-					TotalLost:          0,
-					LastSequenceNumber: 0,
-					Jitter:             0,
-					LastSenderReport:   uint32(videoNTPTime >> 16),
-					Delay:              0,
-				},
-			},
-		}
-
-		buf, err := rr.Marshal()
-
-		if err != nil {
-			fmt.Println("Failed to marshal RTCP Receiver Report:", err)
-			continue
-		}
-
-		_, err = pc.WriteTo(buf, &net.UDPAddr{IP: net.ParseIP("127.0.0.1"), Port: 5001}) // Update IP and port if needed
-		if err != nil {
-			fmt.Println("Failed to send RTCP Receiver Report:", err)
+			// fmt.Printf("Processing RTCP packet of type: %T\n", pkt)
+			s.handleRTCPPacket(pkt)
 		}
 	}
 }
