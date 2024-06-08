@@ -153,8 +153,8 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 		fmt.Println("Invalid PPS base64:", err)
 	}
 
-	s.Log(logger.Debug, "SPS: ", sps)
-	s.Log(logger.Debug, "PPS: ", pps)
+	s.Log(logger.Debug, "SPS: %s", s.SPS)
+	s.Log(logger.Debug, "PPS: %s", s.PPS)
 
 	videoMedi := &description.Media{
 		Type: description.MediaTypeVideo,
@@ -168,7 +168,7 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 
 	if strings.EqualFold(s.VideoCodec, "h265") {
 		vps, err := base64.StdEncoding.DecodeString(s.VPS)
-		s.Log(logger.Debug, "VPS: ", vps)
+		s.Log(logger.Debug, "VPS: %s", s.VPS)
 		if err != nil {
 			fmt.Println("Invalid PPS base64:", err)
 		}
