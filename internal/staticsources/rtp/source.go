@@ -300,12 +300,12 @@ func (s *Source) runReaderAudio(pc net.PacketConn,
 			continue
 		}
 		// fmt.Println("pts audio: ", pts)
-		mu.Lock()
-		defer mu.Unlock()
+		// mu.Lock()
+		// defer mu.Unlock()
 		stream.WriteRTPPacket(medias[1],
 			medias[1].Formats[0],
 			&pkt, time.Now().Add(time.Duration(td)*time.Millisecond), pts)
-		mu.Unlock()
+		// mu.Unlock()
 		// stream.WriteRTPPacket(medias[1],
 		// 	medias[1].Formats[0],
 		// 	&pkt, time.Now(), time.Duration(0))
@@ -433,7 +433,7 @@ func runRTCPSender(pc net.PacketConn) {
 		}
 
 		buf, err := rr.Marshal()
-		mu.Unlock()
+
 		if err != nil {
 			fmt.Println("Failed to marshal RTCP Receiver Report:", err)
 			continue
