@@ -25,7 +25,7 @@ writeQueueSize: 16384
 udpMaxPayloadSize: 1472
 
 # Enable Prometheus-compatible metrics.
-metrics: yes
+metrics: no
 # Address of the metrics listener.
 metricsAddress: :9998
 
@@ -159,7 +159,7 @@ rtsp: yes
 # UDP-multicast allows to save bandwidth when clients are all in the same LAN.
 # TCP is the most versatile, and does support encryption.
 # The handshake is always performed with TCP.
-protocols: [udp, multicast, tcp]
+protocols: [tcp]
 # Encrypt handshakes and TCP streams with TLS (RTSPS).
 # Available values are "no", "strict", "optional".
 encryption: "no"
@@ -615,9 +615,12 @@ pathDefaults:
 # for example "~^prefix" will match all paths that start with "prefix".
 paths:
   # example:
-  # pipe1:
-  #    source: rtp://:5000
-  #    audioSource: rtp://:5002
+  #pipe1:
+     #source: rtp://:5000
+     #audioSource: rtp://:5002
+     #videocodec: h264
+     #sps: Z2QAH6zZQFAFuwFqAgICgAAAAwCAAAAZB4wYyw==
+     #pps: aOvjyyLA
   #pipe2:
      #source: rtp://:5100
      #audioSource: rtp://:5102
