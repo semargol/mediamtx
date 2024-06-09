@@ -46,14 +46,37 @@ type Source struct {
 	ReadTimeout        conf.StringDuration
 	Parent             defs.StaticSourceParent
 
-	videoNTPTime uint64
-	videoOffset  int64
-	audioNTPTime uint64
-	audioOffset  int64
-	videoSSRC    uint32
-	audioSSRC    uint32
-	td           float64
-	mu           sync.Mutex
+	videoOffset   int64
+	audioOffset   int64
+	videoSSRC     uint32
+	audioSSRC     uint32
+	videoOffsetMu sync.Mutex
+	audioOffsetMu sync.Mutex
+	mu            sync.Mutex
+}
+
+func (s *Source) SetVideoOffset(offset int64) {
+	s.videoOffsetMu.Lock()
+	defer s.videoOffsetMu.Unlock()
+	s.videoOffset = offset
+}
+
+func (s *Source) GetVideoOffset() int64 {
+	s.videoOffsetMu.Lock()
+	defer s.videoOffsetMu.Unlock()
+	return s.videoOffset
+}
+
+func (s *Source) SetAudioOffset(offset int64) {
+	s.audioOffsetMu.Lock()
+	defer s.audioOffsetMu.Unlock()
+	s.audioOffset = offset
+}
+
+func (s *Source) GetAudioOffset() int64 {
+	s.audioOffsetMu.Lock()
+	defer s.audioOffsetMu.Unlock()
+	return s.audioOffset
 }
 
 func ConvertNTPTime(NTPTime uint64) time.Time {
@@ -312,10 +335,14 @@ func (s *Source) runReaderVideo(pc net.PacketConn,
 		if !ok {
 			continue
 		}
-		// fmt.Println("pts video: ", pts)
-		newNTPTime := CalculateNTPTime(pkt.Timestamp, 90000, s.videoOffset)
-		// fmt.Println("New v NTPTime:", newNTPTime)
-		un, err := p.ProcessRTPPacket(&pkt, newNTPTime, pts, false)
+
+		offset := s.GetVideoOffset()
+		videoNTPTime := time.Now()
+		if offset != 0 {
+			videoNTPTime = CalculateNTPTime(pkt.Timestamp, 90000, offset)
+		}
+
+		un, err := p.ProcessRTPPacket(&pkt, videoNTPTime, pts, false)
 		if err != nil {
 			fmt.Println("err: ", err)
 		}
@@ -354,12 +381,15 @@ func (s *Source) runReaderAudio(pc net.PacketConn,
 			continue
 		}
 
-		newNTPTime := CalculateNTPTime(pkt.Timestamp, 48000, s.audioOffset)
-		// fmt.Println("New a NTPTime:", newNTPTime)
-		// fmt.Println("Time.Now:", time.Now())
+		offset := s.GetAudioOffset()
+		audioNTPTime := time.Now()
+		if offset != 0 {
+			audioNTPTime = CalculateNTPTime(pkt.Timestamp, 48000, offset)
+		}
+
 		stream.WriteRTPPacket(medias[1],
 			medias[1].Formats[0],
-			&pkt, newNTPTime, pts)
+			&pkt, audioNTPTime, pts)
 		// mu.Unlock()
 		// stream.WriteRTPPacket(medias[1],
 		// 	medias[1].Formats[0],
@@ -416,11 +446,11 @@ func (s *Source) handleRTCPPacket(packet rtcp.Packet) {
 	case *rtcp.SenderReport:
 		ssrc := pkt.SSRC
 		if ssrc == s.videoSSRC {
-			s.videoNTPTime = pkt.NTPTime
-			s.videoOffset = CalculateOffset(pkt.NTPTime, pkt.RTPTime, 90000)
+			offset := CalculateOffset(pkt.NTPTime, pkt.RTPTime, 90000)
+			s.SetVideoOffset(offset)
 		} else if ssrc == s.audioSSRC {
-			s.audioNTPTime = pkt.NTPTime
-			s.audioOffset = CalculateOffset(pkt.NTPTime, pkt.RTPTime, 48000)
+			offset := CalculateOffset(pkt.NTPTime, pkt.RTPTime, 48000)
+			s.SetAudioOffset(offset)
 		} else {
 			fmt.Printf("Unknown SSRC: %d\n", pkt.SSRC)
 		}
