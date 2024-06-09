@@ -133,6 +133,8 @@ type Path struct {
 	SourceAnyPortEnable *bool          `json:"sourceAnyPortEnable,omitempty"` // deprecated
 	RTSPRangeType       RTSPRangeType  `json:"rtspRangeType"`
 	RTSPRangeStart      string         `json:"rtspRangeStart"`
+	RTPVideoUrl         string         `json:"rtpvideourl,omitempty"`
+	RTPAudioUrl         string         `json:"rtpaudiourl,omitempty"`
 
 	// Redirect source
 	SourceRedirect string `json:"sourceRedirect,omitempty"`

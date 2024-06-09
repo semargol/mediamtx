@@ -70,6 +70,9 @@ type Source struct {
 	WriteQueueSize int
 	Parent         defs.StaticSourceParent
 
+	RtpVideoURL string
+	RtpAudioURL string
+
 	rtpVideo *net.UDPConn
 	rtpAudio *net.UDPConn
 
@@ -98,13 +101,12 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 
 	decodeErrLogger := logger.NewLimitedLogger(s)
 
-	rconf := conf.LookupRTPSbyURL(s.ResolvedSource)
-	if rconf != nil {
-		var erv, era error
-		var scheme, adress string
-		var found bool
+	var erv, era error
+	var scheme, adress string
+	var found bool
 
-		scheme, adress, found = strings.Cut(rconf.VideoURL, "//") // rconf.VideoURL[len("udp://"):]
+	if s.RtpVideoURL != "" {
+		scheme, adress, found = strings.Cut(s.RtpVideoURL, "//") // rconf.VideoURL[len("udp://"):]
 		if !found {
 			adress = scheme
 		}
@@ -112,8 +114,10 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 		if erv == nil {
 			s.rtpVideo, _ = net.ListenUDP("udp", nil)
 		}
+	}
 
-		scheme, adress, found = strings.Cut(rconf.AudioURL, "//") // rconf.AudioURL[len("udp://"):]
+	if s.RtpAudioURL != "" {
+		scheme, adress, found = strings.Cut(s.RtpAudioURL, "//") // rconf.AudioURL[len("udp://"):]
 		if !found {
 			adress = scheme
 		}

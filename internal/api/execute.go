@@ -157,6 +157,9 @@ func ConfigSync(t *ApiServer) {
 			newConf.AddPath(pipeConfig.Name, nil)
 			newConf.Validate()
 			setField(newConf.OptionalPaths[pipeConfig.Name], "Source", pipeConfig.RTSPCL.Url)
+			setField(newConf.OptionalPaths[pipeConfig.Name], "RTPVideoUrl", pipeConfig.RTPS.VideoURL)
+			setField(newConf.OptionalPaths[pipeConfig.Name], "RTPAudioUrl", pipeConfig.RTPS.AudioURL)
+
 		}
 	}
 	newConf.Validate()

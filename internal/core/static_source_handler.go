@@ -66,6 +66,8 @@ func (s *staticSourceHandler) initialize() {
 			ReadTimeout:    s.readTimeout,
 			WriteTimeout:   s.writeTimeout,
 			WriteQueueSize: s.writeQueueSize,
+			RtpVideoURL:    s.conf.RTPVideoUrl,
+			RtpAudioURL:    s.conf.RTPAudioUrl,
 			Parent:         s,
 		}
 
