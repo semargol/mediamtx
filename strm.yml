@@ -19,13 +19,13 @@ readTimeout: 10s
 writeTimeout: 10s
 # Size of the queue of outgoing packets.
 # A higher value allows to increase throughput, a lower value allows to save RAM.
-writeQueueSize: 16384
+writeQueueSize: 1048576
 # Maximum size of outgoing UDP packets.
 # This can be decreased to avoid fragmentation on networks with a low UDP MTU.
 udpMaxPayloadSize: 1472
 
 # Enable Prometheus-compatible metrics.
-metrics: no
+metrics: yes
 # Address of the metrics listener.
 metricsAddress: :9998
 
@@ -619,8 +619,8 @@ paths:
      #source: rtp://:5000
      #audioSource: rtp://:5002
      #videocodec: h264
-     #sps: Z2QAH6zZQFAFuwFqAgICgAAAAwCAAAAZB4wYyw==
-     #pps: aOvjyyLA
+     #sps: Z01AH+iAKALdgLUBAQFAAAD6QAA6mAPGDESA
+     #pps: aOvvIA==
   #pipe2:
      #source: rtp://:5100
      #audioSource: rtp://:5102
