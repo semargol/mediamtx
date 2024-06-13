@@ -63,7 +63,8 @@ type Source struct {
 	videoJitterOut float64
 	audioJitterOut float64
 
-	jitterDelay float64
+	videoJitterDelay float64
+	audioJitterDelay float64
 
 	videoSSRC uint32
 	audioSSRC uint32
@@ -74,11 +75,12 @@ type Source struct {
 
 var unixTimeShift float64
 
-const DA bool = false
-const DV bool = false
+const DA bool = true
+const DV bool = true
 
 func (s *Source) init() {
-	s.jitterDelay = 0.700
+	s.videoJitterDelay = 0.700
+	s.audioJitterDelay = 0.700
 }
 
 func init() {
@@ -121,7 +123,7 @@ func (s *Source) AudioControlReceived(rp *rtcp.SenderReport) {
 }
 
 func (s *Source) AudioDataReceived(rp *rtp.Packet) float64 {
-	if s.jitterDelay == 0 {
+	if s.audioJitterDelay == 0 {
 		s.init()
 	}
 	utcTime := UtcTime()
@@ -136,7 +138,7 @@ func (s *Source) AudioDataReceived(rp *rtp.Packet) float64 {
 		ntpTime := s.AudioRtpToNtp(rtpTime)
 		s.audioJitter = utcTime - rtpTime - s.audioUtcOffset
 		s.audioUtcOffset += s.audioJitter / 4
-		s.audioUtcOffsetOut = s.audioUtcOffset + +s.jitterDelay
+		s.audioUtcOffsetOut = s.audioUtcOffset + +s.audioJitterDelay
 		//s.audioShift = utcTime - ntpTime
 		//s.audioShiftFiltered = s.audioShift*0.125 + s.audioShiftFiltered*0.875
 		sendingTime = rtpTime + s.audioUtcOffsetOut
@@ -163,7 +165,7 @@ func (s *Source) VideoControlReceived(rp *rtcp.SenderReport) {
 }
 
 func (s *Source) VideoDataReceived(rp *rtp.Packet) float64 {
-	if s.jitterDelay == 0 {
+	if s.videoJitterDelay == 0 {
 		s.init()
 	}
 	utcTime := UtcTime()
@@ -181,7 +183,7 @@ func (s *Source) VideoDataReceived(rp *rtp.Packet) float64 {
 		ntpTime := s.VideoRtpToNtp(rtpTime)
 		s.videoJitter = utcTime - rtpTime - s.videoUtcOffset
 		s.videoUtcOffset += s.videoJitter / 4
-		s.videoUtcOffsetOut = s.videoUtcOffset + s.jitterDelay
+		s.videoUtcOffsetOut = s.videoUtcOffset + s.videoJitterDelay
 		//s.videoShift = utcTime - ntpTime
 		//s.videoShiftFiltered = s.videoShift*0.125 + s.videoShiftFiltered*0.875
 		sendingTime = rtpTime + s.videoUtcOffsetOut
