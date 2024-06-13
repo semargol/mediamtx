@@ -1,11 +1,13 @@
 package rtp
 
 import (
+	"encoding/base64"
 	"fmt"
-	"github.com/bluenviron/mediamtx/internal/formatprocessor"
 	"net"
 	"strings"
 	"time"
+
+	"github.com/bluenviron/mediamtx/internal/formatprocessor"
 
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
 	"github.com/bluenviron/gortsplib/v4/pkg/format"
@@ -269,23 +271,46 @@ func (s *Source) Run(params defs.StaticSourceRunParams) error {
 
 	go runRTCPReader(s, pcRTCPVideo, s.videoSSRC)
 
+	sps, err := base64.StdEncoding.DecodeString(s.SPS)
+	if err != nil {
+		fmt.Println("Invalid SPS base64:", err)
+	}
+
+	pps, err := base64.StdEncoding.DecodeString(s.PPS)
+	if err != nil {
+		fmt.Println("Invalid PPS base64:", err)
+	}
+
+	s.Log(logger.Debug, "SPS: %s", s.SPS)
+	s.Log(logger.Debug, "PPS: %s", s.PPS)
+
 	videoMedi := &description.Media{
 		Type: description.MediaTypeVideo,
 		Formats: []format.Format{&format.H264{
 			PayloadTyp:        uint8(s.VideoPT),
 			PacketizationMode: 1,
+			SPS:               sps,
+			PPS:               pps,
 		}},
 	}
 
 	if strings.EqualFold(s.VideoCodec, "h265") {
+		vps, err := base64.StdEncoding.DecodeString(s.VPS)
+		s.Log(logger.Debug, "VPS: %s", s.VPS)
+		if err != nil {
+			fmt.Println("Invalid PPS base64:", err)
+		}
+
 		videoMedi = &description.Media{
 			Type: description.MediaTypeVideo,
 			Formats: []format.Format{&format.H265{
 				PayloadTyp: uint8(s.VideoPT),
+				SPS:        sps,
+				VPS:        vps,
+				PPS:        pps,
 			}},
 		}
 	}
-
 	medias := []*description.Media{videoMedi}
 
 	if s.ResolvedAudiSource != "" {
