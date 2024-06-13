@@ -11,8 +11,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// serve browser connection
 func RunHtmlReader() {
-	//var msg Message
 	for {
 		mt, buf, err := controlConnection.ReadMessage()
 		if err != nil || mt != websocket.TextMessage {
@@ -21,10 +21,6 @@ func RunHtmlReader() {
 			//controlConnection = nil
 			break
 		}
-
-		//var msg *api.Message = new(api.Message)
-		//msg.Parse(string(buf))
-		//fmt.Println("html got ", msg)
 
 		text := string(buf)
 		if len(text) > 0 {
@@ -38,33 +34,16 @@ func RunHtmlReader() {
 			//fmt.Println(msg) //%s, type: %d", message, mt)
 			fromControl <- msg
 			_ = controlConnection.WriteMessage(websocket.TextMessage, []byte(strconv.Itoa(cmdNumber)+">"+text))
-			//time.Sleep(50 * time.Millisecond)
 		}
-		/*
-			bytes, merr := json.Marshal(msg)
-			if merr != nil {
-				continue
-			}
-			uerr := json.Unmarshal(bytes, msg)
-			if uerr != nil {
-				continue
-			}
-		*/
-
-		//msg.Corr = cmdNumber
-		//cmdNumber++
-		//msg.Topic = "req"
-
-		//fmt.Println("BROK BrokerControlReader: ", msg) //%s, type: %d", message, mt)
-		//fromControl <- msg
-		//serverBroker.topicList.push(msg, from, &serverBroker.transceiver)
 	}
 }
 
+// redirect http: to ws:
 func home(w http.ResponseWriter, r *http.Request) {
 	homeTemplate.Execute(w, "ws://"+r.Host+"/cihtml")
 }
 
+// serve browser connection
 func strmhtml(w http.ResponseWriter, r *http.Request) {
 	if controlConnection != nil {
 		log.Print("Only one control connection allowed")

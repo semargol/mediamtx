@@ -9,27 +9,21 @@ import (
 	"time"
 )
 
-// var fromServer = make(chan *api.Message, 10)
-var fromControl = make(chan *api.Message, 10)
+var fromControl = make(chan *api.Message, 10) // channel to receive incoming directives
 
-//var serverAddr net.UDPAddr
-
-// var serverConnection api.Transceiver
 var controlConnection *websocket.Conn = nil
 var topicList TopicList
 var inputJson bool = false
 
 func init() {
-	//serverAddrRef, _ := net.ResolveUDPAddr("udp", "127.0.0.1:7001")
-	//serverAddr = *serverAddrRef
 	topicList.TopicMap = make(map[string]*Topic)
 }
 
 func ListenControlConnections() {
 	http.HandleFunc("/cihtml", strmhtml)
-	http.HandleFunc("/ci", strm)
-	http.HandleFunc("/", home)
-	err := http.ListenAndServe(":7002", nil)
+	http.HandleFunc("/ci", strm)             // to connect from ci
+	http.HandleFunc("/", home)               // to connect from browser
+	err := http.ListenAndServe(":7002", nil) // temporary fixed port 7002
 	if err != nil {
 		panic(err)
 	}
@@ -37,6 +31,7 @@ func ListenControlConnections() {
 
 var controlBrokerUpgrader = websocket.Upgrader{} // use default options
 
+// function to serve ci connection
 func strm(w http.ResponseWriter, r *http.Request) {
 	if controlConnection != nil {
 		log.Print("Only one control connection allowed")
@@ -54,38 +49,21 @@ func strm(w http.ResponseWriter, r *http.Request) {
 		}
 		controlConnection = nil
 	}()
-	inputJson = true
+	inputJson = true // json encoding for ci
 	topicList.publish("req", "control")
 	topicList.subscribe("res", "control")
 	RunControlReader()
 }
 
-/*
-	func OpenServerConnection() {
-		//serverConnection.Open(":7000")
-	}
-
-	func CloseControlConnection() {
-		//
-	}
-
-	func CloseServerConnection() {
-		//serverConnection.close()
-	}
-*/
+// read json encoded command from control web socket and send to channel fromControl
 func RunControlReader() {
-	//var msg Message
 	for {
 		mt, buf, err := controlConnection.ReadMessage()
 		if err != nil || mt != websocket.TextMessage {
 			log.Println("controlBrokerReadError:", err)
-			//CloseControlConnection()  will be closed in strm
-			//controlConnection = nil
 			break
 		}
 
-		//msg.Parse(string(buf))
-		//txt := msg.String()
 		var msg *api.Message = new(api.Message)
 		uerr := json.Unmarshal(buf, msg)
 		if uerr != nil {
@@ -100,31 +78,11 @@ func RunControlReader() {
 			}
 			msg.Topic = "req"
 		}
-		//fmt.Println("BROK BrokerControlReader: ", msg) //%s, type: %d", message, mt)
 		fromControl <- msg
-		//serverBroker.topicList.push(msg, from, &serverBroker.transceiver)
 	}
 }
 
-/*
-func RunServerReader() {
-	log.Println("Start api broker")
-	//var msg Message
-	//var from *net.UDPAddr
-	//var err error
-	for {
-		//var msg *api.Message = new(api.Message)
-		//*msg, from, err = serverConnection.ReceiveFrom(10)
-		//msg := <- api.FromServerToBroker
-		//if err == nil {
-			//serverAddr = *from
-			//log.Println("BROK BrokerServerReader: ", from, " ", msg) //%s, type: %d", message, mt)
-			//fromServer <- msg
-		//}
-	}
-}
-*/
-
+// execute directive
 func pushMessage(msg *api.Message, from string) {
 	switch msg.Name {
 	case "pub":
@@ -159,15 +117,14 @@ func pushMessage(msg *api.Message, from string) {
 	}
 }
 
+// dispatch messages from
 func RunBroker() {
 	go ListenControlConnections()
 	for {
 		select {
-		case msg := <-api.FromServerToBroker:
-			//log.Println("BROK ReadFromServer:  ", msg)
+		case msg := <-api.FromServerToBroker: // response from server
 			pushMessage(msg, "server")
-		case msg := <-fromControl:
-			//log.Println("BROK ReadFromControl: ", msg)
+		case msg := <-fromControl: // request  from control
 			pushMessage(msg, "control")
 		case <-interrupt:
 			log.Println("BROK interrupt")
@@ -175,12 +132,12 @@ func RunBroker() {
 		case <-done:
 			log.Println("BROK done")
 			return
-		case <-time.After(time.Second * 2):
+		case <-time.After(time.Second * 2): // wait 2 second
 			if inputJson == false && controlConnection != nil {
 				msg := api.Message{0, "msg", "evn", "tic", "", make(map[string]string), nil}
 				msg.Data["result"] = "100"
 				msg.Data["description"] = "timer event occurs every 2000 msec"
-				event(&msg)
+				event(&msg) // test time events
 			}
 		}
 	}
