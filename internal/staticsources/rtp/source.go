@@ -75,8 +75,8 @@ type Source struct {
 
 var unixTimeShift float64
 
-const DA bool = true
-const DV bool = true
+const DA bool = false
+const DV bool = false
 
 func (s *Source) init() {
 	s.videoJitterDelay = 0.700
