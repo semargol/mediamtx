@@ -136,6 +136,9 @@ func (s *Source) AudioDataReceived(rp *rtp.Packet) float64 {
 		//ntpTime := s.AudioRtpToNtp(rtpTime)
 		//s.audioShift = utcTime - ntpTime
 	}
+	if s.audioNtpOffset == 0 {
+		s.audioNtpOffset = utcTime - rtpTime
+	}
 	if s.audioNtpOffset != 0 {
 		ntpTime := s.AudioRtpToNtp(rtpTime)
 		s.audioJitter = utcTime - rtpTime - s.audioUtcOffset
