@@ -1,15 +1,64 @@
-package control
+package api
 
 import (
 	"encoding/json"
-	"github.com/bluenviron/mediamtx/internal/api"
-	"github.com/gorilla/websocket"
+	"fmt"
+
+	mqtt "github.com/eclipse/paho.mqtt.golang"
+
 	"log"
-	"net/http"
 	"time"
 )
 
-var fromControl = make(chan *api.Message, 10) // channel to receive incoming directives
+func onServerRequest(message Message) {
+	fmt.Printf("Received request:  %s  %s\n", message.Topic, message.String())
+	fromBrokerToServer <- &message
+}
+
+func onServerMqttRequest(client mqtt.Client, message mqtt.Message) {
+	var msg Message
+	_ = json.Unmarshal(message.Payload(), &msg)
+	onServerRequest(msg)
+	//fmt.Printf("Received message: %s from topic: %s\n", message.Payload(), message.Topic())
+}
+
+func RunServer(addr string) {
+	OpenMqttConnection(addr)
+	SubscribeMqttConnection("req", onServerMqttRequest)
+	go RunServerReader()
+}
+
+func RunServerReader() {
+	for {
+		select {
+		case msg := <-fromServerToBroker: // response from server
+			SendResponse(msg)
+		//pushMessage(msg, "server")
+		//case msg := <-fromControl: // request  from control
+		//	pushMessage(msg, "control")
+		case <-interrupt:
+			log.Println("BROK interrupt")
+			return
+		case <-done:
+			log.Println("BROK done")
+			return
+		case <-time.After(time.Second * 2): // wait 2 second
+			//	if inputJson == false && controlConnection != nil {
+			//		msg := Message{0, "msg", "evn", "tic", "", make(map[string]string), nil}
+			//		msg.Data["result"] = "100"
+			//		msg.Data["description"] = "timer event occurs every 2000 msec"
+			//		event(&msg) // test time events
+			//	}
+		}
+	}
+}
+
+/*
+
+func DoRequest(request Message) (response Message) {
+
+
+var fromControl = make(chan *Message, 10) // channel to receive incoming directives
 
 var controlConnection *websocket.Conn = nil
 var topicList TopicList
@@ -83,7 +132,7 @@ func RunControlReader() {
 }
 
 // execute directive
-func pushMessage(msg *api.Message, from string) {
+func pushMessage(msg *Message, from string) {
 	switch msg.Name {
 	case "pub":
 		topicList.publish(msg.Topic, from)
@@ -98,7 +147,7 @@ func pushMessage(msg *api.Message, from string) {
 			for _, addr := range topic.SubscriberList {
 				if addr != from {
 					if addr == "server" {
-						api.FromBrokerToServer <- msg
+						fromBrokerToServer <- msg
 						//_, _ = serverConnection.UdpConn.WriteToUDP(data, &serverAddr)
 					}
 					if addr == "control" && inputJson == true {
@@ -122,7 +171,7 @@ func RunBroker() {
 	go ListenControlConnections()
 	for {
 		select {
-		case msg := <-api.FromServerToBroker: // response from server
+		case msg := <-fromServerToBroker: // response from server
 			pushMessage(msg, "server")
 		case msg := <-fromControl: // request  from control
 			pushMessage(msg, "control")
@@ -134,7 +183,7 @@ func RunBroker() {
 			return
 		case <-time.After(time.Second * 2): // wait 2 second
 			if inputJson == false && controlConnection != nil {
-				msg := api.Message{0, "msg", "evn", "tic", "", make(map[string]string), nil}
+				msg := Message{0, "msg", "evn", "tic", "", make(map[string]string), nil}
 				msg.Data["result"] = "100"
 				msg.Data["description"] = "timer event occurs every 2000 msec"
 				event(&msg) // test time events
@@ -142,3 +191,4 @@ func RunBroker() {
 		}
 	}
 }
+*/

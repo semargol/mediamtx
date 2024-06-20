@@ -2,14 +2,14 @@
 package main
 
 import (
-	"github.com/bluenviron/mediamtx/control"
+	"github.com/bluenviron/mediamtx/internal/api"
 	"os"
 
 	"github.com/bluenviron/mediamtx/internal/core"
 )
 
 func main() {
-	go control.RunBroker()
+	go api.RunServer("tcp://test.mosquitto.org:1883")
 
 	s, ok := core.New(os.Args[1:])
 	if !ok {

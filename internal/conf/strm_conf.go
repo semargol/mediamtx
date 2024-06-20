@@ -64,7 +64,7 @@ func InitializeDefaultStrmConf() StrmConf {
 	}
 }
 
-var StrmGlobalConf *StrmConf
+var StrmGlobalConf StrmConf
 
 func (s *StrmConf) LookupRTPSbyURL(url string) *RTPSConf {
 	var pc *RTPSConf = nil
@@ -77,7 +77,7 @@ func (s *StrmConf) LookupRTPSbyURL(url string) *RTPSConf {
 }
 
 func GetStrmConf() *StrmConf {
-	return StrmGlobalConf
+	return &StrmGlobalConf
 }
 
 func LookupRTPSbyURL(url string) *RTPSConf {

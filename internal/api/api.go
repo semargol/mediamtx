@@ -271,7 +271,7 @@ func (a *API) Initialize() error {
 		return err
 	}
 
-	a.strmServer, err = NewStreamApiServer(network, address, time.Duration(a.ReadTimeout), a)
+	a.strmServer, err = NewStreamApiServer(a)
 	if err != nil {
 		return err
 	}

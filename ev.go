@@ -1,6 +1,14 @@
 package main
 
-func ev_main() {
-	//c := api.NewControl("127.0.0.1:7003", "127.0.0.1:7000")
-	//c.Events()
+import (
+	"github.com/bluenviron/mediamtx/internal/api"
+	"os"
+)
+
+func main() {
+	if len(os.Args) > 1 {
+		api.RunEvents(os.Args[1])
+	} else {
+		api.RunEvents("tcp://test.mosquitto.org:1883")
+	}
 }
