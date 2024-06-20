@@ -439,7 +439,7 @@ func (s *Source) runReaderVideo(pc net.PacketConn,
 		// Initialize videoSSRC
 		if s.videoSSRC == 0 {
 			s.videoSSRC = pkt.SSRC
-			fmt.Printf("Initialized videoSSRC to %d\n", s.videoSSRC)
+			// fmt.Printf("Initialized videoSSRC to %d\n", s.videoSSRC)
 		}
 		pts, ok := timeDecoder.Decode(medias[0].Formats[0], &pkt)
 		if !ok {
@@ -485,7 +485,7 @@ func (s *Source) runReaderAudio(pc net.PacketConn,
 		// Initialize audioSSRC
 		if s.audioSSRC == 0 {
 			s.audioSSRC = pkt.SSRC
-			fmt.Printf("Initialized audioSSRC to %d\n", s.audioSSRC)
+			// fmt.Printf("Initialized audioSSRC to %d\n", s.audioSSRC)
 		}
 
 		pts, ok := timeDecoder.Decode(medias[1].Formats[0], &pkt)
@@ -605,7 +605,7 @@ func runRTCPReader(s *Source, pc net.PacketConn, ssrc uint32) {
 		}
 
 		for _, pkt := range packets {
-			fmt.Printf("Processing RTCP packet of type: %T\n", pkt)
+			// fmt.Printf("Processing RTCP packet of type: %T\n", pkt)
 			handleRTCPPacket(s, pkt)
 		}
 	}
