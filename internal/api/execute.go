@@ -151,6 +151,7 @@ func ConfigSync(t *ApiServer) {
 			setField(newConf.OptionalPaths[pipeConfig.Name], "SPS", pipeConfig.RTPR.SPS)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "PPS", pipeConfig.RTPR.PPS)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "VPS", pipeConfig.RTPR.VPS)
+			setField(newConf.OptionalPaths[pipeConfig.Name], "Jitter", pipeConfig.BUF.Jitter)
 			//fmt.Println("AudioSource", pipeConfig.RTPR.AudioURL)
 			//newConf.Validate()
 			//fmt.Println("newConf AudioSource", newConf.Paths[pipeConfig.Name].AudioSource)
@@ -303,6 +304,7 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
 			VideoPT:    96,
 			AudioPT:    97,
 		},
+		BUF:  conf.BufConf{Jitter: 700},
 		Sink: []string{"RTSP"},
 	}
 	if t.strmConf.Pipes == nil {

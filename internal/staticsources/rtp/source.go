@@ -43,6 +43,7 @@ type Source struct {
 	SPS                string
 	VPS                string
 	PPS                string
+	Jitter             int
 	ReadTimeout        conf.StringDuration
 	Parent             defs.StaticSourceParent
 
@@ -81,8 +82,9 @@ const DA bool = false
 const DV bool = false
 
 func (s *Source) init() {
-	s.videoJitterDelay = 0.700
-	s.audioJitterDelay = 0.700
+	s.videoJitterDelay = float64(s.Jitter) / 1000.0
+	s.audioJitterDelay = float64(s.Jitter) / 1000.0
+	// fmt.Println("jitter: ", s.Jitter)
 }
 
 func init() {

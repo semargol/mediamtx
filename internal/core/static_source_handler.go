@@ -98,6 +98,7 @@ func (s *staticSourceHandler) initialize() {
 			SPS:                s.conf.SPS,
 			VPS:                s.conf.VPS,
 			PPS:                s.conf.PPS,
+			Jitter:             s.conf.Jitter,
 			ReadTimeout:        s.readTimeout,
 			Parent:             s,
 		}

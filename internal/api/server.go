@@ -271,15 +271,11 @@ func (s *ApiServer) Listen() {
 				}
 			case "set/buf":
 				{
-					response = request
-					response.Data["result"] = "command not yet implemented"
-					//response, _ = ApiSetBuf(s, &request)
+					response, _ = ApiUpdatePipeConfig(s, &request, "BUF")
 				}
 			case "get/buf":
 				{
-					response = request
-					response.Data["result"] = "command not yet implemented"
-					//response, _ = ApiGetBuf(s, &request)
+					response, _ = ApiGetSubConfigField(s, &request, "BUF")
 				}
 
 			default:

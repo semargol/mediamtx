@@ -19,6 +19,10 @@ type RTPSCLConf struct {
 	Codec    string
 }
 
+type BufConf struct {
+	Jitter int
+}
+
 type PipeConfig struct {
 	ID     int
 	Name   string
@@ -28,6 +32,7 @@ type PipeConfig struct {
 	RTPR   RTPRConf
 	RTPS   RTPSConf
 	RTSPCL RTSPCLConf
+	BUF    BufConf
 	Type   string
 }
 
