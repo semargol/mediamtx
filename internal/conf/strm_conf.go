@@ -20,7 +20,7 @@ type RTPSCLConf struct {
 }
 
 type BufConf struct {
-	Jitter int
+	Size int
 }
 
 type PipeConfig struct {

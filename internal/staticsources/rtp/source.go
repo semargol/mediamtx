@@ -33,6 +33,7 @@ type packetConn interface {
 
 // Source is a RTP static source.
 type Source struct {
+	ID                 int
 	ResolvedSource     string
 	ResolvedAudiSource string
 	VideoCodec         string
@@ -83,6 +84,7 @@ func (s *Source) init() {
 	s.videoJitterDelay = float64(s.Jitter) / 1000.0
 	s.audioJitterDelay = float64(s.Jitter) / 1000.0
 	// fmt.Println("jitter: ", s.Jitter)
+	// fmt.Println("id: ", s.ID)
 }
 
 func init() {

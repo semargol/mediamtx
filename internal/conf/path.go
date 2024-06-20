@@ -126,6 +126,7 @@ type Path struct {
 	VPS         string `json:"vps,omitempty"`
 	PPS         string `json:"pps,omitempty"`
 	Jitter      int    `json:"jitter,omitempty"`
+	ID          int    `json:"id,omitempty"`
 
 	// RTSP source
 	RTSPTransport       RTSPTransport  `json:"rtspTransport"`
@@ -233,7 +234,7 @@ func (pconf *Path) setDefaults() {
 	// RTP
 	pconf.VideoPT = 96
 	pconf.AudioPT = 97
-	pconf.Jitter = 700
+	pconf.Jitter = 0
 
 	// Hooks
 	pconf.RunOnDemandStartTimeout = 10 * StringDuration(time.Second)

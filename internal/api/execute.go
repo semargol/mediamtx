@@ -145,13 +145,15 @@ func ConfigSync(t *ApiServer) {
 				audioSource := fmt.Sprintf("rtp://:%d", pipeConfig.RTPR.AudioPort)
 				setField(newConf.OptionalPaths[pipeConfig.Name], "AudioSource", audioSource)
 			}
+			setField(newConf.OptionalPaths[pipeConfig.Name], "ID", pipeConfig.ID)
+			fmt.Println("set ID=", pipeConfig.ID)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "Source", videoSource)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "VideoCodec", pipeConfig.RTPR.VideoCodec)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "VideoPT", pipeConfig.RTPR.VideoPT)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "SPS", pipeConfig.RTPR.SPS)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "PPS", pipeConfig.RTPR.PPS)
 			setField(newConf.OptionalPaths[pipeConfig.Name], "VPS", pipeConfig.RTPR.VPS)
-			setField(newConf.OptionalPaths[pipeConfig.Name], "Jitter", pipeConfig.BUF.Jitter)
+			// setField(newConf.OptionalPaths[pipeConfig.Name], "Jitter", pipeConfig.BUF.Size)
 			//fmt.Println("AudioSource", pipeConfig.RTPR.AudioURL)
 			//newConf.Validate()
 			//fmt.Println("newConf AudioSource", newConf.Paths[pipeConfig.Name].AudioSource)
@@ -304,7 +306,7 @@ func ApiAddPipe(t *ApiServer, req *Message) (Message, int) {
 			VideoPT:    96,
 			AudioPT:    97,
 		},
-		BUF:  conf.BufConf{Jitter: 700},
+		BUF:  conf.BufConf{Size: 0},
 		Sink: []string{"RTSP"},
 	}
 	if t.strmConf.Pipes == nil {

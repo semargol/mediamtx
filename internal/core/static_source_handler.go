@@ -98,9 +98,10 @@ func (s *staticSourceHandler) initialize() {
 			SPS:                s.conf.SPS,
 			VPS:                s.conf.VPS,
 			PPS:                s.conf.PPS,
-			Jitter:             s.conf.Jitter,
-			ReadTimeout:        s.readTimeout,
-			Parent:             s,
+			// Jitter:             s.conf.Jitter,
+			ID:          s.conf.ID,
+			ReadTimeout: s.readTimeout,
+			Parent:      s,
 		}
 
 	case strings.HasPrefix(s.resolvedSource, "udp://"):
