@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -81,10 +82,16 @@ const DA bool = false
 const DV bool = false
 
 func (s *Source) init() {
-	s.videoJitterDelay = float64(s.Jitter) / 1000.0
-	s.audioJitterDelay = float64(s.Jitter) / 1000.0
+	//s.videoJitterDelay = float64(s.Jitter) / 1000.0
+	//s.audioJitterDelay = float64(s.Jitter) / 1000.0
 	// fmt.Println("jitter: ", s.Jitter)
 	// fmt.Println("id: ", s.ID)
+	v1 := conf.STRMGlobalConfiguration.GetBufSize(strconv.Itoa(s.ID))
+	//id := conf.STRMGlobalConfiguration.GetRtprId(s.ResolvedSource)
+	//v2 := conf.STRMGlobalConfiguration.GetBufSize(id)
+	//fmt.Printf("audioJitterDelay '%d' %8.3f '%s' %8.3f\n", s.ID, v1, id, v2)
+	s.videoJitterDelay = v1
+	s.audioJitterDelay = v1
 }
 
 func init() {
@@ -127,9 +134,7 @@ func (s *Source) AudioControlReceived(rp *rtcp.SenderReport) {
 }
 
 func (s *Source) AudioDataReceived(rp *rtp.Packet) float64 {
-	if s.audioJitterDelay == 0 {
-		s.init()
-	}
+	s.init()
 	utcTime := UtcTime()
 	rtpTime := float64(rp.Timestamp) / 48000.0
 	sendingTime := 0.0
@@ -172,9 +177,7 @@ func (s *Source) VideoControlReceived(rp *rtcp.SenderReport) {
 }
 
 func (s *Source) VideoDataReceived(rp *rtp.Packet) float64 {
-	if s.videoJitterDelay == 0 {
-		s.init()
-	}
+	s.init()
 	utcTime := UtcTime()
 	rtpTime := float64(rp.Timestamp) / 90000.0
 	sendingTime := 0.0
@@ -206,26 +209,6 @@ func (s *Source) VideoDataReceived(rp *rtp.Packet) float64 {
 func (s *Source) Log(level logger.Level, format string, args ...interface{}) {
 	s.Parent.Log(level, "[RTP source] "+format, args...)
 }
-
-/*
-// Global variables for storing NTP timestamps and SSRCs
-var (
-	videoNTPTime uint64
-	audioNTPTime uint64
-	td           float64
-	tv           uint64
-	nv           uint64
-	pv           uint64
-	ta           uint64
-	na           uint64
-	pa           uint64
-	vscale       int64
-	voff         int64
-	ascale       int64
-	aoff         int64
-	mu           sync.Mutex
-)
-*/
 
 func (s *Source) Run(params defs.StaticSourceRunParams) error {
 	s.Log(logger.Debug, "connecting")

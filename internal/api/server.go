@@ -230,6 +230,7 @@ func (s *ApiServer) Listen() {
 			// 	}
 			case "set/rtpr":
 				{
+					conf.STRMGlobalConfiguration.SetRtpr(request.Data) // also set buf size = 0
 					// response, _ = ApiSetRtp(s.api, &request)
 					response, _ = ApiUpdatePipeConfig(s, &request, "RTPR")
 				}
@@ -241,6 +242,7 @@ func (s *ApiServer) Listen() {
 				}
 			case "set/rtps":
 				{
+					conf.STRMGlobalConfiguration.SetRtps(request.Data)
 					// response, _ = ApiSetRtp(s.api, &request)
 					response, _ = ApiUpdatePipeConfig(s, &request, "RTPS")
 				}
@@ -252,6 +254,7 @@ func (s *ApiServer) Listen() {
 				}
 			case "set/rtspcl":
 				{
+					//conf.STRMGlobalConfiguration.SetRtspcl(request.Data)
 					// response, _ = ApiSetRtp(s.api, &request)
 					response, _ = ApiUpdatePipeConfig(s, &request, "RTSPCL")
 				}
@@ -271,11 +274,14 @@ func (s *ApiServer) Listen() {
 				}
 			case "set/buf":
 				{
-					response, _ = ApiUpdatePipeConfig(s, &request, "BUF")
+					conf.STRMGlobalConfiguration.SetBuf(request.Data)
+					//response, _ = ApiUpdatePipeConfig(s, &request, "BUF")
+					response.Data["result"] = "unknown command"
 				}
 			case "get/buf":
 				{
 					response, _ = ApiGetSubConfigField(s, &request, "BUF")
+					//response.Data["result"] = "unknown command"
 				}
 
 			default:
