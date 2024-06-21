@@ -82,14 +82,7 @@ const DA bool = false
 const DV bool = false
 
 func (s *Source) init() {
-	//s.videoJitterDelay = float64(s.Jitter) / 1000.0
-	//s.audioJitterDelay = float64(s.Jitter) / 1000.0
-	// fmt.Println("jitter: ", s.Jitter)
-	// fmt.Println("id: ", s.ID)
 	v1 := conf.STRMGlobalConfiguration.GetBufSize(strconv.Itoa(s.ID))
-	//id := conf.STRMGlobalConfiguration.GetRtprId(s.ResolvedSource)
-	//v2 := conf.STRMGlobalConfiguration.GetBufSize(id)
-	//fmt.Printf("audioJitterDelay '%d' %8.3f '%s' %8.3f\n", s.ID, v1, id, v2)
 	s.videoJitterDelay = v1
 	s.audioJitterDelay = v1
 }

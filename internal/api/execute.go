@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bluenviron/mediamtx/internal/logger"
 	"reflect"
 	"strconv"
 	"strings"
@@ -108,6 +109,24 @@ func setField(p *conf.OptionalPath, fieldName string, newValue interface{}) {
 		fmt.Println(fieldName + " field type is not supported")
 		return
 	}
+}
+
+func LogOn(api *ApiServer, req *Message) (Message, error) {
+	api.api.Conf.LogLevel = conf.LogLevel(logger.Debug)
+	id := req.Data["id"]
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
+	response.Data["result"] = "OK"
+	response.Data["id"] = id
+	return response, nil
+}
+
+func LogOff(api *ApiServer, req *Message) (Message, error) {
+	api.api.Conf.LogLevel = conf.LogLevel(logger.Error)
+	id := req.Data["id"]
+	response := Message{req.Corr, "msg", "res", req.Verb, req.Noun, make(map[string]string), nil}
+	response.Data["result"] = "OK"
+	response.Data["id"] = id
+	return response, nil
 }
 
 // Configuration synchronization between mediamtx and strm_server

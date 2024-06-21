@@ -21,8 +21,8 @@ type SortedQueue struct {
 	minIndex   int64
 	writeIndex int64
 	readIndex  int64
-	writeSeq   uint16
-	mu         sync.Mutex
+	//writeSeq   uint16
+	mu sync.Mutex
 }
 
 func (pq *SortedQueue) init() {
@@ -36,8 +36,8 @@ func (pq *SortedQueue) Put(p *rtp.Packet, tts float64) {
 	if pq.items == nil {
 		pq.init()
 	}
-	pq.writeSeq = p.SequenceNumber
-	if int32(p.SequenceNumber) < int32(pq.writeSeq)-512 {
+	//pq.writeSeq = p.SequenceNumber
+	if int64(p.SequenceNumber) < int64(pq.writeIndex%65536)-512 {
 		wi := ((pq.writeIndex/65536)+1)*65536 + int64(p.SequenceNumber)
 		if pq.writeIndex < wi {
 			pq.writeIndex = wi
@@ -55,6 +55,9 @@ func (pq *SortedQueue) Put(p *rtp.Packet, tts float64) {
 	np := new(rtp.Packet)
 	_ = np.Unmarshal(nb)
 	pq.items[pq.writeIndex%sortedQueuePower] = SortedQueueItem{np, pq.writeIndex, tts}
+	//if p.PayloadType == 96 {
+	//	fmt.Printf("PT %2d   writeIndex %8d   minIndex %8d   readIndex %8d\n", p.PayloadType, pq.writeIndex, pq.minIndex, pq.readIndex)
+	//}
 }
 
 func (pq *SortedQueue) FirstAfter(start int64, finish int64, maxts float64) *SortedQueueItem {

@@ -180,12 +180,14 @@ func (s *ApiServer) Listen() {
 			case "log/on":
 				{
 					s.strmConf.LogLavel = 1
-					ConfigSync(s)
+					response, _ = LogOn(s, &request)
+					//ConfigSync(s)
 				}
 			case "log/off":
 				{
 					s.strmConf.LogLavel = 4
-					ConfigSync(s)
+					response, _ = LogOff(s, &request)
+					//ConfigSync(s)
 				}
 			case "get/config":
 				{
